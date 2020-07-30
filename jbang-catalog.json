@@ -1,0 +1,8 @@
+{
+  "aliases": {
+    "buginfo": {
+      "script-ref":   "quarkusissue.java",
+      "description":  "Script that collects environment info for Quarkus issue reports"
+    }
+  }
+}
