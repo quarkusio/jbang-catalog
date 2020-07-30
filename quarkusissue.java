@@ -5,43 +5,64 @@
 //DEPS org.zeroturnaround:zt-exec:1.11
 //DEPS org.slf4j:slf4j-nop:1.7.30
 //DEPS net.steppschuh.markdowngenerator:markdowngenerator:1.3.2
+//JAVA 8+
 
-import de.vandermeer.asciitable.AsciiTable;
-import de.vandermeer.asciitable.CWC_LongestLine;
-import de.vandermeer.asciitable.CWC_LongestWordMax;
-import de.vandermeer.asciithemes.TA_GridThemes;
-import de.vandermeer.skb.interfaces.transformers.textformat.TextAlignment;
-import net.steppschuh.markdowngenerator.table.Table;
-import org.zeroturnaround.exec.ProcessExecutor;
-import picocli.CommandLine;
-import picocli.CommandLine.Command;
-import picocli.CommandLine.Parameters;
-
-import java.io.*;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.sql.Time;
-import java.util.*;
-import java.util.concurrent.Callable;
-import java.util.concurrent.Executors;
-import java.util.concurrent.TimeoutException;
-import java.util.function.Consumer;
-import java.util.stream.Collectors;
-
-import static java.lang.System.getenv;
 import static java.lang.System.out;
 
-import java.awt.datatransfer.StringSelection;
 import java.awt.Toolkit;
 import java.awt.datatransfer.Clipboard;
+import java.awt.datatransfer.StringSelection;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.LinkedHashMap;
+import java.util.Map;
+import java.util.Properties;
+import java.util.concurrent.Callable;
+import java.util.concurrent.TimeoutException;
+
+import org.zeroturnaround.exec.ProcessExecutor;
+
+import de.vandermeer.asciitable.AsciiTable;
+import de.vandermeer.asciitable.*;
+import de.vandermeer.asciitable.CWC_LongestLine;
+import de.vandermeer.skb.interfaces.transformers.textformat.TextAlignment;
+import net.steppschuh.markdowngenerator.table.Table;
+import picocli.CommandLine;
+import picocli.CommandLine.Command;
+import picocli.CommandLine.Option;
 
 @Command(name = "quarkusissue", mixinStandardHelpOptions = true, version = "quarkusissue 1.0",
         description = "Gathers system info for when reporting Quarkus made with jbang.dev")
 class quarkusissue implements Callable<Integer> {
 
+    
+    @Option(names={ "-c", "--columns"}, description = "Columns to use for console rendering.")
+    Integer columns;
+
+
     boolean isWindows = System.getProperty("os.name")
             .toLowerCase().startsWith("windows");
 
+    int getColumns() {
+        if(columns==null || columns<=0) {
+            // best guess in java on terminal width     
+            int colwidth = 0;
+
+            try {
+            colwidth = org.jline.terminal.TerminalBuilder.terminal().getWidth();
+            } catch(IOException ie) {
+                //ignore
+            }
+            
+            if(colwidth==0) colwidth = 80;
+            return colwidth;
+        } else {
+            return columns;
+        }
+    }
     public static void main(String... args) {
         int exitCode = new CommandLine(new quarkusissue()).execute(args);
         System.exit(exitCode);
@@ -49,6 +70,7 @@ class quarkusissue implements Callable<Integer> {
 
     String run(String... command) {
         try {
+            System.out.println("Running...[" + String.join(" ", command) + "]...");
             return new ProcessExecutor().command(command).readOutput(true).execute().outputUTF8();
         } catch (InterruptedException | TimeoutException | IOException e) {
             return e.getMessage();
@@ -56,7 +78,11 @@ class quarkusissue implements Callable<Integer> {
     }
 
     String mvnproperty(String property) {
-        return run("mvn", "help:evaluate", "-Dexpression=" + property, "-q", "-DforceStdout");
+        if(isWindows) {
+            return run("mvn.cmd", "help:evaluate", "-Dexpression=" + property, "-q", "-DforceStdout");
+        } else {
+          return  run("mvn", "help:evaluate", "-Dexpression=" + property, "-q", "-DforceStdout");
+        }
     }
 
     Map<String, String> gatherInfo() throws Exception {
@@ -64,7 +90,7 @@ class quarkusissue implements Callable<Integer> {
         Map<String, String> results = new LinkedHashMap<>();
 
         if(isWindows) {
-            results.put("ver", run("ver"));
+            results.put("ver", run("cmd.exe", "/C", "ver"));
         } else {
             results.put("uname -a", run("uname", "-a"));
         }
@@ -73,11 +99,19 @@ class quarkusissue implements Callable<Integer> {
 
         if(System.getenv("GRAALVM_HOME")!=null) {
            // results.put("GRAALVM_HOME", System.getenv("GRAALVM_HOME"));
+           if(isWindows) {
+            results.put("graalvm java -version", run(System.getenv("GRAALVM_HOME") + "/bin/java.exe", "-version"));
+           } else {
             results.put("graalvm java -version", run(System.getenv("GRAALVM_HOME") + "/bin/java", "-version"));
+           }
         }
 
-        if(Files.exists(Path.of("mvnw"))) {
-            results.put("mvnw --version", run("./mvnw", "--version"));
+        if(new File("mvnw").exists()) {
+            if(isWindows) {
+                results.put("mvnw --version", run("./mvnw.cmd", "--version"));
+            } else {
+                results.put("mvnw --version", run("./mvnw", "--version"));
+            }
             results.put("quarkus-plugin.version", mvnproperty("quarkus-plugin.version") );
             results.put("quarkus.platform.artifact-id", mvnproperty("quarkus.platform.artifact-id"));
             results.put("quarkus.platform.group-id", mvnproperty("quarkus.platform.group-id"));
@@ -85,19 +119,22 @@ class quarkusissue implements Callable<Integer> {
         }
 
 
-        if(Files.exists(Path.of("gradlew"))) {
-            results.put("gradlew --version", run("./gradlew", "--version"));
+        if(new File("gradlew").exists()) {
+            if(isWindows) {
+                results.put("mvnw --version", run("./gradlew.bat", "--version"));
+            } else {
+                results.put("mvnw --version", run("./gradlew", "--version"));
+            }
         }
 
-        if(Files.exists(Path.of("gradle.properties"))) {
+        if(new File("gradle.properties").exists()) {
             Properties p = new Properties();
-            try (var f = new FileInputStream((new File("gradle.properties")))) {
+            try (FileInputStream f = new FileInputStream((new File("gradle.properties")))) {
                 p.load(f);
                 results.put("quarkusPluginVersion", p.getProperty("quarkusPluginVersion","N/A") );
                 results.put("quarkusPlatformGroupId", p.getProperty("quarkusPlatformGroupId", "N/A"));
                 results.put("quarkusPlatformArtifactId", p.getProperty("quarkusPlatformArtifactId", "N/A"));
                 results.put("quarkusPlatformVersion", p.getProperty("quarkusPlatformVersion", "N/A"));
-
             }
         }
 
@@ -116,19 +153,22 @@ class quarkusissue implements Callable<Integer> {
         results.keySet().stream()
                 .forEach(key -> {
                     maxkey[0] = Math.max(maxkey[0], ((String) key).length());
-                    var value = results.get((String) key).replace(System.lineSeparator(), "<br>");
-                    var row = at.addRow(key, value);
+                    String value = results.get((String) key).replace(System.lineSeparator(), "<br>");
+                    AT_Row row = at.addRow(key, value);
                     row.getCells().getLast().getContext().setTextAlignment(TextAlignment.LEFT);
                     at.addRule();
 
                     tableBuilder.addRow(key, value);
                 });
 
-        // best guess in java on terminal width       
-        int colwidth = org.jline.terminal.TerminalBuilder.terminal().getWidth();
-        if(colwidth==0) colwidth = 80;
+        
+        int colwidth = getColumns();
 
-        at.getRenderer().setCWC(new CWC_LongestLine().add(5, colwidth-maxkey[0]));
+        int maxwidth = colwidth-maxkey[0]-3;
+        int minwidth = maxkey[0];
+        out.println(minwidth + ", " + maxwidth);
+
+        at.getRenderer().setCWC(new CWC_FixedWidth().add(minwidth).add(maxwidth));
 
         String table = at.render(colwidth);
 
@@ -147,7 +187,7 @@ class quarkusissue implements Callable<Integer> {
 
         out.println("Gathering information...");
 
-        var info = gatherInfo();
+        Map<String, String> info = gatherInfo();
 
         print(info);
 
