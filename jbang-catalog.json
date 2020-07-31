@@ -3,6 +3,10 @@
     "buginfo": {
       "script-ref":   "quarkusissue.java",
       "description":  "Script that collects environment info for Quarkus issue reports"
+    },
+    "indexcatalog": {
+      "script-ref":   "quarkusindexcatalog.java",
+      "description":  "Script that indexes a catalog into a Quarkus Registry format"
     }
   }
 }
