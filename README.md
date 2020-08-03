@@ -1,2 +1,2 @@
 # jbang-catalog
-Collection of JBang scripts to deal with Quarkus releases, etc
+Collection of JBang scripts related to Quarkus and its subprojects
