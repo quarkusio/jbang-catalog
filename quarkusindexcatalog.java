@@ -59,7 +59,7 @@ class quarkusindexcatalog implements Callable<Integer> {
         if (parentFile != null) {
             parentFile.mkdirs();
         }
-        mapper.writeValue(outputFile, builder.build());
+        mapper.writeValue(outputFile.getAbsoluteFile(), builder.build());
         return 0;
     }
 
