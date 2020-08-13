@@ -9,7 +9,7 @@ import io.quarkus.registry.builder.RegistryBuilder;
 import io.quarkus.registry.catalog.model.Repository;
 import picocli.CommandLine;
 import picocli.CommandLine.Command;
-import picocli.CommandLine.Parameters;
+import picocli.CommandLine.Option;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.PropertyNamingStrategy;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
@@ -34,10 +34,10 @@ import java.util.concurrent.Callable;
         description = "Indexes a catalog repository to a format read by DefaultExtensionRegistry")
 class quarkusindexcatalog implements Callable<Integer> {
 
-    @Parameters(index = "0", description = "The repository path to index")
+    @Option(names = {"-p","--repository-path"}, description = "The repository path to index", required = true)
     private Path repositoryPath;
 
-    @Parameters(index = "1", description = "The output file")
+    @Option(names = {"-o","--output-file"}, description = "The output file", required = true)
     private File outputFile;
 
     public static void main(String... args) {
