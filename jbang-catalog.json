@@ -10,7 +10,7 @@
     },
     "builditemdoc": {
       "script-ref":   "quarkusbuilditemdoc.java",
-      "description":  "Script that generates an Asciidoc for all the BuildItems in the Quarkus core repository.\n Run with `find extensions -name "*BuildItem.java" | jbang builditemdoc@quarkusio > docs/src/main/asciidoc/build-items.adoc` in the root of a cloned quarkusio/quarkus repository"
+      "description":  "Script that generates an Asciidoc for all the BuildItems in the Quarkus core repository. Run with `find extensions -name \"*BuildItem.java\" | jbang builditemdoc@quarkusio > docs/src/main/asciidoc/build-items.adoc` in the root of a cloned quarkusio/quarkus repository"
     }
   }
 }
