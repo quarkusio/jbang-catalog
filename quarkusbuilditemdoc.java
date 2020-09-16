@@ -73,11 +73,15 @@ class quarkusbuilditemdoc implements Callable<Integer> {
                     int deploymentIdx = pathString.indexOf("/deployment/src");
                     int idx = Math.max(Math.max(spiIdx, runtimeIdx), deploymentIdx);
                     int extensionsIdx = pathString.indexOf("extensions/");
+                    int startIdx = 0;
+                    if (extensionsIdx != -1) {
+                        startIdx = extensionsIdx + 11;
+                    }
                     String name;
                     if (idx == -1) {
-                        name = pathString.substring(extensionsIdx + 11, pathString.indexOf("/", extensionsIdx + 12));
+                        name = pathString.substring(startIdx, pathString.indexOf("/", startIdx + 1));
                     } else {
-                        name = pathString.substring(extensionsIdx + 11, idx);
+                        name = pathString.substring(startIdx, idx);
                     }
                     Pair<Path, JavaClassSource> pair = Tuples.pair(path, source);
                     multimap.put(name, pair);
