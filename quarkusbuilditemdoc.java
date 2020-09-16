@@ -1,6 +1,6 @@
 //usr/bin/env jbang "$0" "$@" ; exit $?
 //DEPS info.picocli:picocli:4.5.0
-//DEPS org.jboss.forge.roaster:roaster-jdt:2.22.1.Final
+//DEPS org.jboss.forge.roaster:roaster-jdt:2.22.2.Final
 //DEPS org.eclipse.collections:eclipse-collections:10.4.0
 //DEPS org.yaml:snakeyaml:1.27
 
@@ -53,7 +53,7 @@ class quarkusbuilditemdoc implements Callable<Integer> {
 
     private String buildDescriptionFromJavaDoc(JavaClassSource source) {
         if (!source.hasJavaDoc()) {
-            return "No JavaDoc found";
+            return "<i>No Javadoc found</i>";
         }
         return source.getJavaDoc().getText();
     }
@@ -131,8 +131,8 @@ class quarkusbuilditemdoc implements Callable<Integer> {
         String className = pair.getTwo().getQualifiedName();
         String description = buildDescriptionFromJavaDoc(pair.getTwo());
 
-        System.out.println("| "+ link + "[`" + className + "`, window=\"_blank\"]");
-        System.out.println("| +++ " + javadocToHTML(description) + " +++");
+        System.out.println("| " + link + "[`" + className + "`, window=\"_blank\"]");
+        System.out.println("| +++" + javadocToHTML(description) + "+++");
     }
 
     private void printTableFooter() {
@@ -141,10 +141,22 @@ class quarkusbuilditemdoc implements Callable<Integer> {
 
     private String javadocToHTML(String content) {
         return content
-                .replaceAll("\\{@see", "<pre>")
-                .replaceAll("\\{@code", "<pre>")
-                .replaceAll("\\{@link", "<pre>")
-                .replaceAll("}", "</pre>");
+                .replaceAll("\\{?@see ", "<pre>")
+                .replaceAll("\\{?@code ", "<pre>")
+                .replaceAll("\\{?@link ", "<pre>")
+                .replaceAll(" ?}", "</pre>");
+    }
+
+    private String javadocToAsciidoc(String content) {
+        return content
+                .replaceAll("<p>", "\n")
+                .replaceAll("</p>", "\n")
+                .replaceAll("\\{?@see ", "```")
+                .replaceAll("\\{?@code ", "```")
+                .replaceAll("\\{?@link ", "```")
+                .replaceAll("<pre>", "```\n")
+                .replaceAll("</pre>", "\n```")
+                .replaceAll(" ?}", "```");
     }
 
 
