@@ -7,6 +7,10 @@
     "indexcatalog": {
       "script-ref":   "quarkusindexcatalog.java",
       "description":  "Script that indexes a catalog into a Quarkus Registry format"
+    },
+    "builditemdoc": {
+      "script-ref":   "builditemdoc.java",
+      "description":  "Script that generates an Asciidoc for all the BuildItems in the Quarkus core repository.\n Run with `find extensions -name "*BuildItem.java" | jbang builditemdoc@quarkusio > docs/src/main/asciidoc/build-items.adoc` in the root of a cloned quarkusio/quarkus repository"
     }
   }
 }
