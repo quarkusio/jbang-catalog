@@ -28,10 +28,10 @@ import picocli.CommandLine.Command;
 
 @Command(name = "builditemdoc", mixinStandardHelpOptions = true, version = "builditemdoc 0.1",
         description = "builditemdoc made with jbang")
-class builditemdoc implements Callable<Integer> {
+class quarkusbuilditemdoc implements Callable<Integer> {
 
     public static void main(String... args) {
-        int exitCode = new CommandLine(new builditemdoc()).execute(args);
+        int exitCode = new CommandLine(new quarkusbuilditemdoc()).execute(args);
         System.exit(exitCode);
     }
 
