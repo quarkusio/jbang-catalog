@@ -1,8 +1,12 @@
 {
+  "catalogs": {},
   "aliases": {
     "buginfo": {
-      "script-ref":   "quarkusissue.java",
-      "description":  "Script that collects environment info for Quarkus issue reports"
+      "script-ref": "quarkusissue.java",
+      "description": "Script that collects environment info for Quarkus issue reports"
+    },
+    "cli": {
+      "script-ref": "io.quarkus:quarkus-cli:1.9.0.Final:runner"
     }
   }
 }
