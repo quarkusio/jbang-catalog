@@ -7,6 +7,10 @@
     },
     "cli": {
       "script-ref": "io.quarkus:quarkus-cli:1.10.2.Final:runner"
+    },
+    "qcd": {
+      "script-ref": "src/QuarkusExampleCodestartDev.java",
+      "description": "Script to help you develop a Quarkus example codestart"
     }
   }
 }
