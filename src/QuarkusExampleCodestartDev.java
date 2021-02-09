@@ -16,6 +16,8 @@ import picocli.CommandLine.Option;
 import picocli.CommandLine.Parameters;
 import io.quarkus.platform.descriptor.QuarkusPlatformDescriptor;
 import io.quarkus.platform.descriptor.resolver.json.QuarkusJsonPlatformDescriptorResolver;
+import io.quarkus.platform.tools.ToolsConstants;
+import io.quarkus.platform.tools.ToolsUtils;
 
 import java.io.File;
 import java.io.IOException;
@@ -26,14 +28,13 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Properties;
 import java.util.Scanner;
 import java.util.concurrent.Callable;
 import java.util.stream.Collectors;
 
-import static io.quarkus.devtools.codestarts.quarkus.QuarkusCodestartData.DataKey.*;
-import static io.quarkus.devtools.codestarts.quarkus.QuarkusCodestartData.DataKey.JAVA_VERSION;
-import static io.quarkus.devtools.codestarts.quarkus.QuarkusCodestartData.DataKey.QUARKUS_GRADLE_PLUGIN_ID;
-import static io.quarkus.devtools.codestarts.quarkus.QuarkusCodestartData.DataKey.QUARKUS_GRADLE_PLUGIN_VERSION;
+import static io.quarkus.devtools.codestarts.quarkus.QuarkusCodestartData.QuarkusDataKey.*;
+import static io.quarkus.platform.tools.ToolsUtils.readQuarkusProperties;
 
 @Command(name = "QuarkusExampleCodestartDev", mixinStandardHelpOptions = true, version = "0.1",
     description = "QuarkusExampleCodestartDev made with jbang")
@@ -79,7 +80,7 @@ class QuarkusExampleCodestartDev implements Callable<Integer> {
                 .buildTool(BuildTool.findTool(buildTool))
                 .addCodestart(language)
                 .addCodestarts(Arrays.stream(names.split(",")).map(String::trim).collect(Collectors.toList()))
-                .putData(JAVA_VERSION.getKey(), System.getProperty("java.specification.version"))
+                .putData(JAVA_VERSION.key(), System.getProperty("java.specification.version"))
                 .messageWriter(debug ? MessageWriter.debug() : MessageWriter.info())
                 .build();
 
@@ -116,16 +117,22 @@ class QuarkusExampleCodestartDev implements Callable<Integer> {
 
     static Map<String, Object> getDefaultData(final QuarkusPlatformDescriptor descriptor) {
         final HashMap<String, Object> data = new HashMap<>();
-        data.put(BOM_GROUP_ID.getKey(), descriptor.getBomGroupId());
-        data.put(BOM_ARTIFACT_ID.getKey(), descriptor.getBomArtifactId());
-        data.put(BOM_VERSION.getKey(), descriptor.getBomVersion());
-        data.put(QUARKUS_VERSION.getKey(), descriptor.getQuarkusVersion());
-        data.put(QUARKUS_MAVEN_PLUGIN_GROUP_ID.getKey(), "io.quarkus");
-        data.put(QUARKUS_MAVEN_PLUGIN_ARTIFACT_ID.getKey(), "quarkus-maven-plugin");
-        data.put(QUARKUS_MAVEN_PLUGIN_VERSION.getKey(), descriptor.getQuarkusVersion());
-        data.put(QUARKUS_GRADLE_PLUGIN_ID.getKey(), "io.quarkus");
-        data.put(QUARKUS_GRADLE_PLUGIN_VERSION.getKey(), descriptor.getQuarkusVersion());
-        data.put(JAVA_VERSION.getKey(), "11");
+        final Properties quarkusProp = readQuarkusProperties(descriptor);
+        data.put(BOM_GROUP_ID.key(), descriptor.getBomGroupId());
+        data.put(BOM_ARTIFACT_ID.key(), descriptor.getBomArtifactId());
+        data.put(BOM_VERSION.key(), descriptor.getBomVersion());
+        data.put(QUARKUS_VERSION.key(), descriptor.getQuarkusVersion());
+        data.put(QUARKUS_MAVEN_PLUGIN_GROUP_ID.key(), ToolsUtils.getMavenPluginGroupId(quarkusProp));
+        data.put(QUARKUS_MAVEN_PLUGIN_ARTIFACT_ID.key(), ToolsUtils.getMavenPluginArtifactId(quarkusProp));
+        data.put(QUARKUS_MAVEN_PLUGIN_VERSION.key(), ToolsUtils.getMavenPluginVersion(quarkusProp));
+        data.put(QUARKUS_GRADLE_PLUGIN_ID.key(), ToolsUtils.getMavenPluginGroupId(quarkusProp));
+        data.put(QUARKUS_GRADLE_PLUGIN_VERSION.key(), ToolsUtils.getGradlePluginVersion(quarkusProp));
+        data.put(JAVA_VERSION.key(), "11");
+        data.put(KOTLIN_VERSION.key(), quarkusProp.getProperty(ToolsConstants.PROP_KOTLIN_VERSION));
+        data.put(SCALA_VERSION.key(), quarkusProp.getProperty(ToolsConstants.PROP_SCALA_VERSION));
+        data.put(SCALA_MAVEN_PLUGIN_VERSION.key(), quarkusProp.getProperty(ToolsConstants.PROP_SCALA_PLUGIN_VERSION));
+        data.put(MAVEN_COMPILER_PLUGIN_VERSION.key(), quarkusProp.getProperty(ToolsConstants.PROP_COMPILER_PLUGIN_VERSION));
+        data.put(MAVEN_SUREFIRE_PLUGIN_VERSION.key(), quarkusProp.getProperty(ToolsConstants.PROP_SUREFIRE_PLUGIN_VERSION));
         return data;
     }
 
