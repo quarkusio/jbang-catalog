@@ -1,8 +1,8 @@
 ///usr/bin/env jbang "$0" "$@" ; exit $?
 //SOURCES WrapperRunner.java
 //DEPS info.picocli:picocli:4.5.0
-//DEPS io.quarkus:quarkus-platform-descriptor-json:1.11.1.Final io.quarkus:quarkus-platform-descriptor-resolver-json:1.11.1.Final
-//DEPS io.quarkus:quarkus-devtools-common:1.11.1.Final
+//DEPS io.quarkus:quarkus-platform-descriptor-json:${quarkus.version:1.11.1.Final} io.quarkus:quarkus-platform-descriptor-resolver-json:${quarkus.version:1.11.1.Final}
+//DEPS io.quarkus:quarkus-devtools-common:${quarkus.version:1.11.1.Final}
 //DEPS org.eclipse.sisu:org.eclipse.sisu.plexus:0.3.4
 
 import io.quarkus.devtools.codestarts.CodestartProjectDefinition;
