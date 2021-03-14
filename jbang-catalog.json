@@ -11,13 +11,6 @@
     "qcd": {
       "script-ref": "src/QuarkusExampleCodestartDev.java",
       "description": "Script to help you develop a Quarkus example codestart"
-    },
-    "h2": {
-      "script-ref": "com.h2database:h2:1.4.200",
-      "arguments": [
-        "-webAllowOthers",
-        "-tcpAllowOthers"
-      ]
     }
   }
 }
