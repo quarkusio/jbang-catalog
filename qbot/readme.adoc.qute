@@ -1,0 +1,31 @@
+## The simplest github bot app named ${baseName}
+
+This is a tiny github bot app built with jbang and quarkus using https://github.com/quarkiverse/quarkiverse-github-app extension.
+
+Prerequisite:
+
+* Have a https://smee.io channel created
+* Have a github app https://github.com/settings/apps/new[created] with the permissions you need
+* Add a webhook secret (random characters)
+* Create a private key for the app (scroll down)
+
+Then edit `.env` file (don't commit it) with contents like:
+
+[source,shell]
+[source]
+----
+QUARKUS_GITHUB_APP_APP_ID=<your numeric app id>
+QUARKUS_GITHUB_APP_WEBHOOK_SECRET=<entered secret>
+QUARKUS_GITHUB_APP_WEBHOOK_PROXY_URL=<your Smee.io channel URL>
+QUARKUS_GITHUB_APP_PRIVATE_KEY=-----BEGIN RSA PRIVATE KEY-----\
+                                                                \
+                        YOUR PRIVATE KEY                        \
+                                                                \
+-----END RSA PRIVATE KEY-----
+
+----
+
+Then you can run your bot with `jbang {baseName}.java`
+
+You can enable dev mode by using `jbang -Dquarkus.dev {baseName}.java`
+

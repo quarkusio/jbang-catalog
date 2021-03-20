@@ -15,5 +15,17 @@
       "script-ref": "src/QuarkusExampleCodestartDev.java",
       "description": "Script to help you develop a Quarkus example codestart"
     }
+  },
+  "templates": {
+    "githubbot": {
+      "description":"Example of making a github app",
+      "file-refs": {
+        "{basename}.java": "qbot/bot.java.qute",
+        "bot-index.html": "qbot/bot-index.html",
+        ".env": "qbot/.env",
+        "qbot.png": "qbot/qbot.png",
+        "readme.adoc": "qbot/readme.adoc.qute"
+      }
+    }
   }
 }

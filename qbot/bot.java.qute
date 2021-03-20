@@ -1,0 +1,31 @@
+///usr/bin/env jbang "$0" "$@" ; exit $?
+//DEPS io.quarkus:quarkus-bom:$\{quarkus.version:1.11.0.Final}@pom
+//DEPS io.quarkiverse.githubapp:quarkus-github-app:0.0.6
+//Q:CONFIG quarkus.github-app.debug.payload-directory=payloads
+//Q:CONFIG quarkus.log.category."io.quarkiverse".level=DEBUG
+//FILES META-INF/resources/index.html=bot-index.html
+//FILES META-INF/resources/qbot.png=qbot.png
+
+import java.io.IOException;
+
+import io.quarkiverse.githubapp.GitHubEvent;
+import io.quarkiverse.githubapp.event.Event;
+import org.kohsuke.github.GHEventPayload;
+import io.quarkiverse.githubapp.event.Issue;
+import org.jboss.logging.Logger;
+
+import javax.enterprise.event.Observes;
+
+public class {baseName} {
+
+  private static final Logger LOG = Logger.getLogger({baseName}.class);
+
+    void onOpen(@Issue.Opened GHEventPayload.Issue issuePayload) throws IOException {
+  		issuePayload.getIssue().comment("Hello from MyGitHubApp");
+    }
+
+    void anyEvent(@Observes GitHubEvent event) {
+        LOG.info("got this event:" + event.getEvent() + " - " + event.getAction());
+    }
+
+}
