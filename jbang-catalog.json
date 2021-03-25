@@ -6,10 +6,10 @@
       "description": "Script that collects environment info for Quarkus issue reports"
     },
     "cli": {
-      "script-ref": "io.quarkus:quarkus-cli:1.12.2.Final:runner"
+      "script-ref": "io.quarkus:quarkus-cli:1.13.0.Final:runner"
     },
     "qs": {
-      "script-ref": "io.quarkus:quarkus-cli:1.12.2.Final:runner"
+      "script-ref": "io.quarkus:quarkus-cli:1.13.0.Final:runner"
     },
     "qcd": {
       "script-ref": "src/QuarkusExampleCodestartDev.java",
