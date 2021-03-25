@@ -9,7 +9,7 @@
       "script-ref": "io.quarkus:quarkus-cli:1.13.0.Final:runner"
     },
     "qs": {
-      "script-ref": "io.quarkus:quarkus-cli:1.13.0.Final:runner"
+      "script-ref": "https://repo1.maven.org/maven2/io/quarkus/quarkus-cli/1.13.0.Final/quarkus-cli-1.13.0.Final-runner.jar"
     },
     "qcd": {
       "script-ref": "src/QuarkusExampleCodestartDev.java",
