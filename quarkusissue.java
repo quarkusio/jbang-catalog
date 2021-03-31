@@ -16,8 +16,6 @@ import java.awt.datatransfer.StringSelection;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Properties;
@@ -28,7 +26,6 @@ import org.zeroturnaround.exec.ProcessExecutor;
 
 import de.vandermeer.asciitable.AsciiTable;
 import de.vandermeer.asciitable.*;
-import de.vandermeer.asciitable.CWC_LongestLine;
 import de.vandermeer.skb.interfaces.transformers.textformat.TextAlignment;
 import net.steppschuh.markdowngenerator.table.Table;
 import picocli.CommandLine;
