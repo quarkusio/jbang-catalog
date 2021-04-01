@@ -1,9 +1,8 @@
 ///usr/bin/env jbang "$0" "$@" ; exit $?
-//SOURCES WrapperRunner.java
 //DEPS info.picocli:picocli:4.5.0
-//DEPS io.quarkus:quarkus-platform-descriptor-json:${quarkus.version:1.12.2.Final} io.quarkus:quarkus-platform-descriptor-resolver-json:${quarkus.version:1.12.2.Final}
-//DEPS io.quarkus:quarkus-devtools-common:${quarkus.version:1.12.2.Final}
 //DEPS org.eclipse.sisu:org.eclipse.sisu.plexus:0.3.4
+//DEPS io.quarkus:quarkus-devtools-common:${quarkus.version:1.13.0.Final}
+//DEPS io.quarkus:quarkus-devtools-testing:${quarkus.version:1.13.0.Final}
 
 import io.quarkus.devtools.codestarts.CodestartProjectDefinition;
 import io.quarkus.devtools.codestarts.quarkus.QuarkusCodestartCatalog;
@@ -14,10 +13,11 @@ import picocli.CommandLine;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
 import picocli.CommandLine.Parameters;
-import io.quarkus.platform.descriptor.QuarkusPlatformDescriptor;
-import io.quarkus.platform.descriptor.resolver.json.QuarkusJsonPlatformDescriptorResolver;
+import io.quarkus.devtools.project.QuarkusProjectHelper;
+import io.quarkus.registry.catalog.ExtensionCatalog;
 import io.quarkus.platform.tools.ToolsConstants;
 import io.quarkus.platform.tools.ToolsUtils;
+import io.quarkus.devtools.testing.WrapperRunner;
 
 import java.io.File;
 import java.io.IOException;
@@ -35,11 +35,12 @@ import java.util.stream.Collectors;
 
 import static io.quarkus.devtools.codestarts.quarkus.QuarkusCodestartData.QuarkusDataKey.*;
 import static io.quarkus.platform.tools.ToolsUtils.readQuarkusProperties;
+import static io.quarkus.platform.tools.ToolsUtils.resolvePlatformDescriptorDirectly;
 
 @Command(name = "QuarkusExampleCodestartDev", mixinStandardHelpOptions = true, version = "0.1",
-    description = "QuarkusExampleCodestartDev made with jbang")
+        description = "QuarkusExampleCodestartDev made with jbang")
 class QuarkusExampleCodestartDev implements Callable<Integer> {
-    private QuarkusPlatformDescriptor platformDescr;
+    private ExtensionCatalog catalog;
 
     @Option(names = "-l", description = "comma separated list of languages to generate", defaultValue = "java")
     private String languages;
@@ -76,15 +77,15 @@ class QuarkusExampleCodestartDev implements Callable<Integer> {
             String language = s.trim().toLowerCase();
 
             final QuarkusCodestartProjectInput input = QuarkusCodestartProjectInput.builder()
-                .addData(getDefaultData(getPlatformDescriptor()))
-                .buildTool(BuildTool.findTool(buildTool))
-                .addCodestart(language)
-                .addCodestarts(Arrays.stream(names.split(",")).map(String::trim).collect(Collectors.toList()))
-                .putData(JAVA_VERSION.key(), System.getProperty("java.specification.version"))
-                .messageWriter(debug ? MessageWriter.debug() : MessageWriter.info())
-                .build();
+                    .addData(getDefaultData(getCatalog()))
+                    .buildTool(BuildTool.findTool(buildTool))
+                    .addCodestart(language)
+                    .addCodestarts(Arrays.stream(names.split(",")).map(String::trim).collect(Collectors.toList()))
+                    .putData(JAVA_VERSION.key(), System.getProperty("java.specification.version"))
+                    .messageWriter(debug ? MessageWriter.debug() : MessageWriter.info())
+                    .build();
 
-            final CodestartProjectDefinition projectDefinition = getCatalog().createProject(input);
+            final CodestartProjectDefinition projectDefinition = getCodestartCatalog().createProject(input);
             final Path targetPath = targetDir.toPath().resolve(projName + "_" + language);
             if (Files.isDirectory(targetPath)) {
                 System.out.println("Directory already exists '" + targetPath.toString() + "'.. delete [y]?");
@@ -97,7 +98,7 @@ class QuarkusExampleCodestartDev implements Callable<Integer> {
                 }
             }
             projectDefinition.generate(targetPath);
-            System.out.println("\n\nProject created in " + language + ": " + targetPath.toString() );
+            System.out.println("\n\nProject created in " + language + ": " + targetPath.toString());
 
             if (test) {
                 System.out.println("Building and running tests...");
@@ -110,18 +111,18 @@ class QuarkusExampleCodestartDev implements Callable<Integer> {
 
     static void deleteDirectoryStream(Path path) throws IOException {
         Files.walk(path)
-            .sorted(Comparator.reverseOrder())
-            .map(Path::toFile)
-            .forEach(File::delete);
+                .sorted(Comparator.reverseOrder())
+                .map(Path::toFile)
+                .forEach(File::delete);
     }
 
-    static Map<String, Object> getDefaultData(final QuarkusPlatformDescriptor descriptor) {
+    static Map<String, Object> getDefaultData(final ExtensionCatalog catalog) {
         final HashMap<String, Object> data = new HashMap<>();
-        final Properties quarkusProp = readQuarkusProperties(descriptor);
-        data.put(BOM_GROUP_ID.key(), descriptor.getBomGroupId());
-        data.put(BOM_ARTIFACT_ID.key(), descriptor.getBomArtifactId());
-        data.put(BOM_VERSION.key(), descriptor.getBomVersion());
-        data.put(QUARKUS_VERSION.key(), descriptor.getQuarkusVersion());
+        final Properties quarkusProp = readQuarkusProperties(catalog);
+        data.put(BOM_GROUP_ID.key(), catalog.getBom().getGroupId());
+        data.put(BOM_ARTIFACT_ID.key(), catalog.getBom().getArtifactId());
+        data.put(BOM_VERSION.key(), catalog.getBom().getVersion());
+        data.put(QUARKUS_VERSION.key(), catalog.getQuarkusCoreVersion());
         data.put(QUARKUS_MAVEN_PLUGIN_GROUP_ID.key(), ToolsUtils.getMavenPluginGroupId(quarkusProp));
         data.put(QUARKUS_MAVEN_PLUGIN_ARTIFACT_ID.key(), ToolsUtils.getMavenPluginArtifactId(quarkusProp));
         data.put(QUARKUS_MAVEN_PLUGIN_VERSION.key(), ToolsUtils.getMavenPluginVersion(quarkusProp));
@@ -136,13 +137,16 @@ class QuarkusExampleCodestartDev implements Callable<Integer> {
         return data;
     }
 
-    private QuarkusCodestartCatalog getCatalog() throws IOException {
-        return QuarkusCodestartCatalog.fromQuarkusPlatformDescriptorAndDirectories(getPlatformDescriptor(), Collections.singletonList(codestartsDir.toPath()));
+    private QuarkusCodestartCatalog getCodestartCatalog() throws IOException {
+        return QuarkusCodestartCatalog
+                .fromQuarkusPlatformDescriptorAndDirectories(getCatalog(), Collections.singletonList(codestartsDir.toPath()));
     }
 
-    private QuarkusPlatformDescriptor getPlatformDescriptor() {
-        return platformDescr == null
-            ? platformDescr = QuarkusJsonPlatformDescriptorResolver.newInstance().resolveBundled()
-            : platformDescr;
+    private ExtensionCatalog getCatalog() {
+        if (catalog == null) {
+            this.catalog = resolvePlatformDescriptorDirectly(null, null, "1.13.0.Final",
+                    QuarkusProjectHelper.artifactResolver(), QuarkusProjectHelper.messageWriter());
+        }
+        return this.catalog;
     }
 }
