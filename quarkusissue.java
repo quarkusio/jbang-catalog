@@ -16,8 +16,6 @@ import java.awt.datatransfer.StringSelection;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Properties;
@@ -28,7 +26,6 @@ import org.zeroturnaround.exec.ProcessExecutor;
 
 import de.vandermeer.asciitable.AsciiTable;
 import de.vandermeer.asciitable.*;
-import de.vandermeer.asciitable.CWC_LongestLine;
 import de.vandermeer.skb.interfaces.transformers.textformat.TextAlignment;
 import net.steppschuh.markdowngenerator.table.Table;
 import picocli.CommandLine;
@@ -43,6 +40,8 @@ class quarkusissue implements Callable<Integer> {
     @Option(names={ "-c", "--columns"}, description = "Columns to use for console rendering.")
     Integer columns;
 
+    @Option(names={ "-m", "--print-markdown"}, description = "Prints markdown to standard output instead of copying it to clipboard.")
+    boolean printMarkdown;
 
     boolean isWindows = System.getProperty("os.name")
             .toLowerCase().startsWith("windows");
@@ -175,12 +174,16 @@ class quarkusissue implements Callable<Integer> {
 
         out.println(table);
 
-        System.out.println("Copied markdown version to clipboard.");
-        StringSelection stringSelection = new StringSelection(tableBuilder.build().toString());
-        Clipboard clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
-        clipboard.setContents(stringSelection, null);
+        final String markdownTable = tableBuilder.build().toString();
+        if (printMarkdown) {
+            System.out.println(markdownTable);
+        } else {
+            System.out.println("Copied markdown version to clipboard.");
+            StringSelection stringSelection = new StringSelection(markdownTable);
+            Clipboard clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
+            clipboard.setContents(stringSelection, null);
+        }
 
-        
     }
 
     @Override
