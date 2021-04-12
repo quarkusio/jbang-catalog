@@ -40,8 +40,8 @@ class quarkusissue implements Callable<Integer> {
     @Option(names={ "-c", "--columns"}, description = "Columns to use for console rendering.")
     Integer columns;
 
-    @Option(names={ "-m", "--print-markdown"}, description = "Prints markdow to standard output instead of copying it to clipboard.")
-    Boolean printMarkdown;
+    @Option(names={ "-m", "--print-markdown"}, description = "Prints markdown to standard output instead of copying it to clipboard.")
+    boolean printMarkdown;
 
     boolean isWindows = System.getProperty("os.name")
             .toLowerCase().startsWith("windows");
@@ -175,7 +175,7 @@ class quarkusissue implements Callable<Integer> {
         out.println(table);
 
         final String markdownTable = tableBuilder.build().toString();
-        if (printMarkdown != null && printMarkdown) {
+        if (printMarkdown) {
             System.out.println(markdownTable);
         } else {
             System.out.println("Copied markdown version to clipboard.");
