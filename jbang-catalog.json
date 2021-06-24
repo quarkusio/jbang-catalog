@@ -12,7 +12,7 @@
       "script-ref": "https://repo1.maven.org/maven2/io/quarkus/quarkus-cli/1.13.3.Final/quarkus-cli-1.13.3.Final-runner.jar"
     },
     "quarkus": {
-      "script-ref": "https://repo1.maven.org/maven2/io/quarkus/quarkus-cli/2.0.0.CR3/quarkus-cli-2.0.0.CR3-runner.jar"
+      "script-ref": "https://repo1.maven.org/maven2/io/quarkus/quarkus-cli/2.0.0.Final/quarkus-cli-2.0.0.Final-runner.jar"
     }
   },
   "templates": {
