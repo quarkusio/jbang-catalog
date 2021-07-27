@@ -226,7 +226,7 @@ class publishcatalog implements Callable<Integer> {
             Metadata metadata = metadataReader.read(is);
             Versioning versioning = metadata.getVersioning();
             String candidateVersion = versioning.getLatest();
-            if (skipVersionCheck || !containsValue(versionsRead, candidateVersion)) {
+            if (!containsValue(versionsRead, candidateVersion)) {
                 return candidateVersion;
             }
             // Try the previous released version
