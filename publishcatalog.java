@@ -176,6 +176,7 @@ class publishcatalog implements Callable<Integer> {
             String latestVersion = getLatestVersion(repository, groupId, artifactId, versionsNode);
             if (latestVersion == null) {
                 log.warnf("%s:%s latest version was read previously (or could not find it). Skipping", groupId, artifactId);
+                log.info("---------------------------------------------------------------");
                 return;
             }
             // Compare if not already in descriptor
