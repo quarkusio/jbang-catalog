@@ -1,7 +1,7 @@
 ///usr/bin/env jbang "$0" "$@" ; exit $?
 //DEPS info.picocli:picocli:4.6.1
 //DEPS io.quarkus:quarkus-devtools-registry-client:2.1.0.Final
-//DEPS org.eclipse.jgit:org.eclipse.jgit:5.11.0.202103091610-r
+//DEPS org.eclipse.jgit:org.eclipse.jgit:5.12.0.202106070339-r
 //JAVA_OPTIONS "-Djava.util.logging.SimpleFormatter.format=%1$s [%4$s] %5$s%6$s%n"
 //JAVA 11
 
@@ -227,7 +227,7 @@ class publishcatalog implements Callable<Integer> {
             Metadata metadata = metadataReader.read(is);
             Versioning versioning = metadata.getVersioning();
             String candidateVersion = versioning.getLatest();
-            if (!containsValue(versionsRead, candidateVersion)) {
+            if (skipVersionCheck || !containsValue(versionsRead, candidateVersion)) {
                 return candidateVersion;
             }
             // Try the previous released version
