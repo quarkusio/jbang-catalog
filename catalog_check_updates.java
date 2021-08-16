@@ -103,7 +103,8 @@ class catalog_check_updates implements Callable<Integer> {
             String artifactId = tree.get("artifact-id").asText();
             log.infof("Fetching latest version for %s:%s", groupId, artifactId);
             ArrayNode versionsNode = tree.withArray("versions");
-            List<String> newVersions = populateVersions(repository, groupId, artifactId, versionsNode);
+            List<String> newVersions = populateVersions(repository, groupId, artifactId, versionsNode,
+                    tree.withArray("exclude-versions"));
             if (newVersions.isEmpty()) {
                 log.info("No new versions found");
             } else {
@@ -134,7 +135,8 @@ class catalog_check_updates implements Callable<Integer> {
             String artifactId = tree.get("artifact-id").asText();
             log.infof("Fetching latest version for %s:%s", groupId, artifactId);
             ArrayNode versionsNode = tree.withArray("versions");
-            List<String> newVersions = populateVersions(repository, groupId, artifactId, versionsNode);
+            List<String> newVersions = populateVersions(repository, groupId, artifactId, versionsNode,
+                    tree.withArray("exclude-versions"));
             if (newVersions.isEmpty()) {
                 log.info("No new versions found");
             } else {
@@ -150,7 +152,8 @@ class catalog_check_updates implements Callable<Integer> {
         log.info("---------------------------------------------------------------");
     }
 
-    private List<String> populateVersions(String repository, String groupId, String artifactId, ArrayNode versionsNode)
+    private List<String> populateVersions(String repository, String groupId, String artifactId, ArrayNode versionsNode,
+            ArrayNode excludeVersions)
             throws IOException {
         List<String> newVersions = new ArrayList<>();
         List<String> versionsAlreadyRead = StreamSupport.stream(versionsNode.spliterator(), false)
@@ -170,14 +173,25 @@ class catalog_check_updates implements Callable<Integer> {
             versions = keepLatest(versions);
             versionsNode.removeAll();
             for (String version : versions) {
-                versionsNode.add(version);
-                newVersions.add(version);
+                if (!containsValue(excludeVersions, version)) {
+                    versionsNode.add(version);
+                    newVersions.add(version);
+                }
             }
         } catch (XmlPullParserException e) {
             log.debug("Invalid metadata", e);
         }
         newVersions.removeAll(versionsAlreadyRead);
         return newVersions;
+    }
+
+    private boolean containsValue(ArrayNode arrayNode, String latestVersion) {
+        for (JsonNode node : arrayNode) {
+            if (latestVersion.matches(node.asText())) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private List<String> keepLatest(List<String> versions) {
