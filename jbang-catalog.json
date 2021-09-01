@@ -6,7 +6,7 @@
       "description": "Script that collects environment info for Quarkus issue reports"
     },
     "cli": {
-      "script-ref": "https://repo1.maven.org/maven2/io/quarkus/quarkus-cli/2.1.3.Final/quarkus-cli-2.1.3.Final-runner.jar"
+      "script-ref": "https://repo1.maven.org/maven2/io/quarkus/quarkus-cli/2.2.1.Final/quarkus-cli-2.2.1.Final-runner.jar"
     },
     "catalog_publish": {
       "script-ref": "catalog_publish.java",
@@ -17,10 +17,10 @@
       "description": "Script that checks for updates in an extension catalog"
     },
     "qs": {
-      "script-ref": "https://repo1.maven.org/maven2/io/quarkus/quarkus-cli/2.1.3.Final/quarkus-cli-2.1.3.Final-runner.jar"
+      "script-ref": "https://repo1.maven.org/maven2/io/quarkus/quarkus-cli/2.2.1.Final/quarkus-cli-2.2.1.Final-runner.jar"
     },
     "quarkus": {
-      "script-ref": "https://repo1.maven.org/maven2/io/quarkus/quarkus-cli/2.1.3.Final/quarkus-cli-2.1.3.Final-runner.jar"
+      "script-ref": "https://repo1.maven.org/maven2/io/quarkus/quarkus-cli/2.2.1.Final/quarkus-cli-2.2.1.Final-runner.jar"
     }
   },
   "templates": {
