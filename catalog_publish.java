@@ -1,6 +1,6 @@
 ///usr/bin/env jbang "$0" "$@" ; exit $?
 //DEPS info.picocli:picocli:4.6.1
-//DEPS io.quarkus:quarkus-devtools-registry-client:2.1.2.Final
+//DEPS io.quarkus:quarkus-devtools-registry-client:2.2.1.Final
 //JAVA_OPTIONS "-Djava.util.logging.SimpleFormatter.format=%1$s [%4$s] %5$s%6$s%n"
 //JAVA 11
 
@@ -108,7 +108,22 @@ class catalog_publish implements Callable<Integer> {
                 byte[] jsonPlatform = readCatalog(repository, groupId, artifactId, version, classifier);
                 // Publish
                 log.infof("Publishing %s:%s:%s", groupId, artifactId, version);
-                publishCatalog(platformKey, jsonPlatform);
+                publishCatalog(platformKey, jsonPlatform, false);
+                if (!all) {
+                    // Just publish the first one
+                    break;
+                }
+            }
+            for (JsonNode node : tree.withArray("pinned-versions")) {
+                String version = node.asText();
+                if (classifierAsVersion) {
+                    classifier = version;
+                }
+                // Get Extension YAML
+                byte[] jsonPlatform = readCatalog(repository, groupId, artifactId, version, classifier);
+                // Publish
+                log.infof("Publishing %s:%s:%s", groupId, artifactId, version);
+                publishCatalog(platformKey, jsonPlatform, true);
                 if (!all) {
                     // Just publish the first one
                     break;
@@ -210,10 +225,11 @@ class catalog_publish implements Callable<Integer> {
         }
     }
 
-    private void publishCatalog(String platformKey, byte[] jsonPlatform) throws IOException {
+    private void publishCatalog(String platformKey, byte[] jsonPlatform, boolean pinned) throws IOException {
         try (final CloseableHttpClient httpClient = createHttpClient()) {
             HttpPost post = new HttpPost(registryURL.resolve("/admin/v1/extension/catalog"));
             post.setHeader("X-Platform", platformKey);
+            post.setHeader("X-Platform-Pinned", Boolean.toString(pinned));
             post.setHeader("Content-Type", "application/json");
             if (token != null) {
                 post.setHeader("Token", token);
