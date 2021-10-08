@@ -1,7 +1,7 @@
 ///usr/bin/env jbang "$0" "$@" ; exit $?
 //DEPS info.picocli:picocli:4.6.1
-//DEPS io.quarkus:quarkus-devtools-registry-client:2.2.1.Final
-//DEPS org.eclipse.jgit:org.eclipse.jgit:5.12.0.202106070339-r
+//DEPS io.quarkus:quarkus-devtools-registry-client:2.3.0.Final
+//DEPS org.eclipse.jgit:org.eclipse.jgit:5.13.0.202109080827-r
 //JAVA_OPTIONS "-Djava.util.logging.SimpleFormatter.format=%1$s [%4$s] %5$s%6$s%n"
 //JAVA 11
 
