@@ -1,6 +1,6 @@
 ///usr/bin/env jbang "$0" "$@" ; exit $?
 //DEPS info.picocli:picocli:4.6.1
-//DEPS io.quarkus:quarkus-devtools-registry-client:2.3.0.Final
+//DEPS io.quarkus:quarkus-devtools-registry-client:2.6.0.Final
 //DEPS org.eclipse.jgit:org.eclipse.jgit:5.13.0.202109080827-r
 //JAVA_OPTIONS "-Djava.util.logging.SimpleFormatter.format=%1$s [%4$s] %5$s%6$s%n"
 //JAVA 11
@@ -26,7 +26,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fasterxml.jackson.dataformat.yaml.YAMLMapper;
-import io.quarkus.registry.catalog.json.JsonCatalogMapperHelper;
+import io.quarkus.registry.catalog.CatalogMapperHelper;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.conn.ssl.NoopHostnameVerifier;
 import org.apache.http.impl.client.CloseableHttpClient;
@@ -68,7 +68,7 @@ class catalog_check_updates implements Callable<Integer> {
 
     public catalog_check_updates() {
         this.yamlMapper = new YAMLMapper();
-        JsonCatalogMapperHelper.initMapper(yamlMapper);
+        CatalogMapperHelper.initMapper(yamlMapper);
     }
 
     @Override

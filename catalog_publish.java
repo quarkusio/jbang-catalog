@@ -1,6 +1,6 @@
 ///usr/bin/env jbang "$0" "$@" ; exit $?
 //DEPS info.picocli:picocli:4.6.1
-//DEPS io.quarkus:quarkus-devtools-registry-client:2.3.0.Final
+//DEPS io.quarkus:quarkus-devtools-registry-client:2.6.0.Final
 //JAVA_OPTIONS "-Djava.util.logging.SimpleFormatter.format=%1$s [%4$s] %5$s%6$s%n"
 //JAVA 11
 
@@ -19,10 +19,9 @@ import java.util.stream.Stream;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fasterxml.jackson.dataformat.yaml.YAMLMapper;
-import io.quarkus.registry.catalog.json.JsonCatalogMapperHelper;
+import io.quarkus.registry.catalog.CatalogMapperHelper;
 import org.apache.http.StatusLine;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
@@ -67,7 +66,7 @@ class catalog_publish implements Callable<Integer> {
 
     public catalog_publish() {
         this.yamlMapper = new YAMLMapper();
-        JsonCatalogMapperHelper.initMapper(yamlMapper);
+        CatalogMapperHelper.initMapper(yamlMapper);
     }
 
     @Override
