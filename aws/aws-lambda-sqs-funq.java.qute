@@ -7,17 +7,15 @@
 {/for}
 //JAVA_OPTIONS -Djava.util.logging.manager=org.jboss.logmanager.LogManager
 //Q:CONFIG quarkus.banner.enabled=false
-//Q:CONFIG quarkus.funqy.export=${functionName:function}
+//Q:CONFIG quarkus.funqy.export=$\{functionName:function\}
 
 
-import com.amazonaws.services.lambda.runtime.Context;
-import com.amazonaws.services.lambda.runtime.RequestHandler;
 import com.amazonaws.services.lambda.runtime.events.SQSEvent;
 import org.jboss.logging.Logger;
 
 import java.util.stream.Collectors;
 
-public class {baseName} implements RequestHandler<SQSEvent, OutputObject>  {
+public class {baseName} {
 
     private static final Logger LOG = Logger.getLogger({baseName}.class);
 
@@ -25,8 +23,8 @@ public class {baseName} implements RequestHandler<SQSEvent, OutputObject>  {
 
     }
 
-    @Override
-    public OutputObject handleRequest(SQSEvent sqsEvent, Context context) {
+    @Funq("$\{functionName:function\}")
+    public OutputObject handleRequest(SQSEvent sqsEvent) {
         LOG.info("Incoming object: " + sqsEvent);
         if (sqsEvent.getRecords() != null) {
             LOG.info("Incoming object bodies: " + sqsEvent.getRecords().stream().map(SQSEvent.SQSMessage::getBody).collect(Collectors.joining(";")));

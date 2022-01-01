@@ -7,7 +7,7 @@
 {/for}
 //JAVA_OPTIONS -Djava.util.logging.manager=org.jboss.logmanager.LogManager
 //Q:CONFIG quarkus.banner.enabled=false
-//Q:CONFIG quarkus.funqy.export=${functionName:function}
+//Q:CONFIG quarkus.funqy.export=$\{functionName:function\}
 
 
 import io.quarkus.funqy.Funq;
@@ -21,7 +21,7 @@ public class {baseName} {
 
     }
 
-    @Funq("${functionName:function}")
+    @Funq("$\{functionName:function\}")
     public OutputObject handleRequest(InputObject input) {
         return new OutputObject().setResult("OK").setRequestId(context.getAwsRequestId());
     }
