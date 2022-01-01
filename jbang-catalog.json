@@ -38,9 +38,17 @@
       "file-refs": {"{filename}": "aws/aws-lambda.java.qute"},
       "description": "Quarkus AWS Lambda template"
     },
+    "qawslambda-funq": {
+      "file-refs": {"{filename}": "aws/aws-lambda-funq.java.qute"},
+      "description": "Quarkus AWS Lambda template using Funq"
+    },
     "qawslambda-sqs": {
       "file-refs": {"{filename}": "aws/aws-lambda-sqs.java.qute"},
       "description": "Quarkus AWS Lambda template with incoming SQS event"
+    },
+    "qawslambda-sqs-funq": {
+      "file-refs": {"{filename}": "aws/aws-lambda-sqs-funq.java.qute"},
+      "description": "Quarkus AWS Lambda template with incoming SQS event using Funq"
     }
   }
 }
