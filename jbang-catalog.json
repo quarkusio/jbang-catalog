@@ -33,6 +33,14 @@
         "qbot.png": "qbot/qbot.png",
         "readme.adoc": "qbot/readme.adoc.qute"
       }
+    },
+    "qawslambda": {
+      "file-refs": {"{filename}": "aws/aws-lambda.java.qute"},
+      "description": "Quarkus AWS Lambda template"
+    },
+    "qawslambda-sqs": {
+      "file-refs": {"{filename}": "aws/aws-lambda-sqs.java.qute"},
+      "description": "Quarkus AWS Lambda template with incoming SQS event"
     }
   }
 }
