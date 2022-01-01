@@ -23,7 +23,7 @@ public class {baseName} {
 
     @Funq("funqFunction")
     public OutputObject handleRequest(InputObject input) {
-        return new OutputObject().setResult("OK").setRequestId(context.getAwsRequestId());
+        return new OutputObject().setResult("OK");
     }
 
 }

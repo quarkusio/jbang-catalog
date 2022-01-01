@@ -29,7 +29,7 @@ public class {baseName} {
         if (sqsEvent.getRecords() != null) {
             LOG.info("Incoming object bodies: " + sqsEvent.getRecords().stream().map(SQSEvent.SQSMessage::getBody).collect(Collectors.joining(";")));
         }
-        return new OutputObject().setResult("OK").setRequestId(context.getAwsRequestId());
+        return new OutputObject().setResult("OK");
     }
 
 }
