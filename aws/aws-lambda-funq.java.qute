@@ -8,7 +8,7 @@
 //JAVA_OPTIONS -Djava.util.logging.manager=org.jboss.logmanager.LogManager
 //Q:CONFIG quarkus.banner.enabled=false
 //Q:CONFIG quarkus.funqy.export=funqFunction
-
+//FILES application.properties
 
 import io.quarkus.funqy.Funq;
 import org.jboss.logging.Logger;

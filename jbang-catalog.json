@@ -25,7 +25,7 @@
   },
   "templates": {
     "githubbot": {
-      "description":"Example of making a github app",
+      "description": "Example of making a github app",
       "file-refs": {
         "{basename}.java": "qbot/bot.java.qute",
         "bot-index.html": "qbot/bot-index.html",
@@ -35,19 +35,31 @@
       }
     },
     "qawslambda": {
-      "file-refs": {"{filename}": "aws/aws-lambda.java.qute"},
+      "file-refs": {
+        "{filename}": "aws/aws-lambda.java.qute",
+        "application.properties": "aws/application.properties"
+      },
       "description": "Quarkus AWS Lambda template"
     },
     "qawslambda-funq": {
-      "file-refs": {"{filename}": "aws/aws-lambda-funq.java.qute"},
+      "file-refs": {
+        "{filename}": "aws/aws-lambda-funq.java.qute",
+        "application.properties": "aws/application.properties"
+      },
       "description": "Quarkus AWS Lambda template using Funq"
     },
     "qawslambda-sqs": {
-      "file-refs": {"{filename}": "aws/aws-lambda-sqs.java.qute"},
+      "file-refs": {
+        "{filename}": "aws/aws-lambda-sqs.java.qute",
+        "application.properties": "aws/application.properties"
+      },
       "description": "Quarkus AWS Lambda template with incoming SQS event"
     },
     "qawslambda-sqs-funq": {
-      "file-refs": {"{filename}": "aws/aws-lambda-sqs-funq.java.qute"},
+      "file-refs": {
+        "{filename}": "aws/aws-lambda-sqs-funq.java.qute",
+        "application.properties": "aws/application.properties"
+      },
       "description": "Quarkus AWS Lambda template with incoming SQS event using Funq"
     }
   }
