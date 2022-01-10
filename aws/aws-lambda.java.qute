@@ -6,8 +6,8 @@
 //DEPS {dep}
 {/for}
 //JAVA_OPTIONS -Djava.util.logging.manager=org.jboss.logmanager.LogManager
-//Q:CONFIG quarkus.banner.enabled=false
 //FILES application.properties
+//Q:CONFIG quarkus.banner.enabled=false
 
 
 import com.amazonaws.services.lambda.runtime.Context;

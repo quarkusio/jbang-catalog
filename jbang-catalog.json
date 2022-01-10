@@ -34,49 +34,65 @@
         "readme.adoc": "qbot/readme.adoc.qute"
       }
     },
-    "qawslambda": {
+    "q-aws-lambda": {
       "file-refs": {
         "{filename}": "aws/aws-lambda.java.qute",
         "application.properties": "aws/application.properties"
       },
       "description": "Quarkus AWS Lambda template"
     },
-    "qawslambda-tf": {
+    "q-aws-lambda-tf": {
       "file-refs": {
         "{filename}": "aws/aws-lambda.java.qute",
+        "generate-jar.sh": "aws/generate-jar.sh",
+        "generate-native-image.sh": "aws/generate-native-image.sh",
         "application.properties": "aws/application.properties",
-        "lambda.tf": "aws/lambda-aws.tf.qute"
+        "lambda-aws.tf": "aws/lambda-aws.tf.qute"
       },
-      "description": "Quarkus AWS Lambda template with Terraform template"
+      "description": "Quarkus AWS Lambda template with Terraform template. Use the -Dnative-function flag to have native image based Terraform resources"
     },
-    "qawslambda-funq": {
+    "q-aws-lambda-funq": {
       "file-refs": {
         "{filename}": "aws/aws-lambda-funq.java.qute",
         "application.properties": "aws/application.properties"
       },
       "description": "Quarkus AWS Lambda template using Funq"
     },
-    "qawslambda-funq-tf": {
+    "q-aws-lambda-funq-tf": {
       "file-refs": {
         "{filename}": "aws/aws-lambda-funq.java.qute",
         "application.properties": "aws/application.properties",
-        "lambda.tf": "aws/lambda-funq.tf.qute"
+        "lambda-funq.tf": "aws/lambda-funq.tf.qute"
       },
-      "description": "Quarkus AWS Lambda template using Funq"
+      "description": "Quarkus AWS Lambda template using Funq. Use the -Dnative-function flag to have native image based Terraform resources"
     },
-    "qawslambda-sqs": {
+    "q-aws-lambda-sqs": {
       "file-refs": {
         "{filename}": "aws/aws-lambda-sqs.java.qute",
         "application.properties": "aws/application.properties"
       },
       "description": "Quarkus AWS Lambda template with incoming SQS event"
     },
-    "qawslambda-sqs-funq": {
+    "q-aws-lambda-sqs-funq": {
       "file-refs": {
         "{filename}": "aws/aws-lambda-sqs-funq.java.qute",
         "application.properties": "aws/application.properties"
       },
       "description": "Quarkus AWS Lambda template with incoming SQS event using Funq"
+    },
+    "q-aws-lambda-s3": {
+      "file-refs": {
+        "{filename}": "aws/aws-lambda-s3.java.qute",
+        "application.properties": "aws/application.properties"
+      },
+      "description": "Quarkus AWS Lambda template with incoming S3 event"
+    },
+    "q-aws-lambda-s3-funq": {
+      "file-refs": {
+        "{filename}": "aws/aws-lambda-s3-funq.java.qute",
+        "application.properties": "aws/application.properties"
+      },
+      "description": "Quarkus AWS Lambda template with incoming S3 event using Funq"
     }
   }
 }

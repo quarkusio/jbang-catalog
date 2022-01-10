@@ -1,5 +1,28 @@
-resource "aws_iam_role" "iam_for_lambda" {
-  name = "iam_for_lambda"
+{#if tf-providers}
+terraform {
+  required_version = ">= 0.14.0"
+  required_providers {
+    aws        = {
+      source  = "hashicorp/aws"
+      version = "{aws.version ?: '3.71.0'}"
+    }
+    archive    = {
+      source  = "hashicorp/archive"
+      version = "{archive.version ?: '2.2.0'}"
+    }
+    null = {
+      source = "hashicorp/null"
+      version = "{null.version ?: '3.1.0'}"
+    }
+  }
+}
+provider "aws" {
+  region  = "{aws.region ?: 'eu-central-1'}"
+}
+{/if}
+
+resource "aws_iam_role" "iam_for_lambda_{baseName}" {
+  name = "iam_for_lambda_{baseName}"
 
   assume_role_policy = <<EOF
 {
@@ -18,24 +41,59 @@ resource "aws_iam_role" "iam_for_lambda" {
 EOF
 }
 
-resource "local_file" "jar_file" {
-  filename       = "{baseName}.jar"
-  content_base64 = filebase64sha256("{baseName}.java")
+resource "null_resource" "jar_file_{baseName}" {
+  triggers = {
+    file-hash = fileexists("{baseName}.java") ? filebase64sha256("{baseName}.java") : base64sha256("0")
+  }
   provisioner "local-exec" {
-    command = "jbang build --fresh {baseName}.java && jbang export portable --fresh --force {baseName}.jar && jar uf {baseName}.jar lib/"
+    command = "sh generate-jar.sh {baseName}"
   }
 }
 
-resource "aws_lambda_function" "function" {
-  filename         = local_file.jar_file.filename
-  source_code_hash = local_file.jar_file.content_base64
+resource "aws_lambda_function" "function_{baseName}" {
+  filename         = "{baseName}.jar"
+  source_code_hash = fileexists("{baseName}.jar") ? filebase64sha256("{baseName}.jar") : base64sha256("0")
   function_name    = "{baseName}"
-  role             = aws_iam_role.iam_for_lambda.arn
+  role             = aws_iam_role.iam_for_lambda_{baseName}.arn
   handler          = "io.quarkus.amazon.lambda.runtime.QuarkusStreamHandler::handleRequest"
 
-  depends_on = [local_file.jar_file]
+  depends_on = [null_resource.jar_file_{baseName}]
 
   runtime = "java11"
   memory_size = 256
 
 }
+
+{#if native-function}
+
+resource "null_resource" "native_image_{baseName}" {
+  triggers = {
+    file-hash = fileexists("{baseName}.java") ? filebase64sha256("{baseName}.java") : base64sha256("0")
+  }
+  provisioner "local-exec" {
+    command = "sh generate-native-image.sh {baseName}"
+  }
+}
+
+data "archive_file" "native_function_{baseName}" {
+  output_path = "{baseName}-function.zip"
+  type        = "zip"
+  source_file = "bootstrap"
+}
+
+resource "aws_lambda_function" "function_{baseName}_native" {
+  filename         = "{baseName}-function.zip"
+  source_code_hash = fileexists("{baseName}-function.zip") ? filebase64sha256("{baseName}-function.zip") : base64sha256("0")
+  function_name    = "{baseName}"
+  role             = aws_iam_role.iam_for_lambda_{baseName}.arn
+  handler          = "not-needed"
+
+  depends_on = [
+    null_resource.native_image_{baseName}
+  ]
+
+  runtime     = "provided"
+  memory_size = 128
+
+}
+{/if}

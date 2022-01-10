@@ -6,9 +6,9 @@
 //DEPS {dep}
 {/for}
 //JAVA_OPTIONS -Djava.util.logging.manager=org.jboss.logmanager.LogManager
+//FILES application.properties
 //Q:CONFIG quarkus.banner.enabled=false
 //Q:CONFIG quarkus.funqy.export=funqFunction
-//FILES application.properties
 
 
 import com.amazonaws.services.lambda.runtime.events.SQSEvent;

@@ -1,23 +1,22 @@
 ///usr/bin/env jbang "$0" "$@" ; exit $?
 //JAVA 11
 //DEPS io.quarkus:quarkus-bom:$\{quarkus.version:2.6.0.Final}@pom
-//DEPS io.quarkus:quarkus-amazon-lambda
+//DEPS io.quarkus:quarkus-funqy-amazon-lambda
 {#for dep in dependencies.orEmpty}
 //DEPS {dep}
 {/for}
 //JAVA_OPTIONS -Djava.util.logging.manager=org.jboss.logmanager.LogManager
 //FILES application.properties
 //Q:CONFIG quarkus.banner.enabled=false
+//Q:CONFIG quarkus.funqy.export=funqFunction
 
 
-import com.amazonaws.services.lambda.runtime.Context;
-import com.amazonaws.services.lambda.runtime.RequestHandler;
-import com.amazonaws.services.lambda.runtime.events.SQSEvent;
+import com.amazonaws.services.lambda.runtime.events.SNSEvent;
 import org.jboss.logging.Logger;
 
 import java.util.stream.Collectors;
 
-public class {baseName} implements RequestHandler<SQSEvent, OutputObject>  {
+public class {baseName} {
 
     private static final Logger LOG = Logger.getLogger({baseName}.class);
 
@@ -25,13 +24,10 @@ public class {baseName} implements RequestHandler<SQSEvent, OutputObject>  {
 
     }
 
-    @Override
-    public OutputObject handleRequest(SQSEvent sqsEvent, Context context) {
-        LOG.info("Incoming object: " + sqsEvent);
-        if (sqsEvent.getRecords() != null) {
-            LOG.info("Incoming object bodies: " + sqsEvent.getRecords().stream().map(SQSEvent.SQSMessage::getBody).collect(Collectors.joining(";")));
-        }
-        return new OutputObject().setResult("OK").setRequestId(context.getAwsRequestId());
+    @Funq("funqFunction")
+    public OutputObject handleRequest(SNSEvent event) {
+        LOG.info("Incoming object: " + event);
+        return new OutputObject().setResult("OK");
     }
 
 }

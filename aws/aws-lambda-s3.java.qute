@@ -12,12 +12,12 @@
 
 import com.amazonaws.services.lambda.runtime.Context;
 import com.amazonaws.services.lambda.runtime.RequestHandler;
-import com.amazonaws.services.lambda.runtime.events.SQSEvent;
+import com.amazonaws.services.lambda.runtime.events.S3Event;
 import org.jboss.logging.Logger;
 
 import java.util.stream.Collectors;
 
-public class {baseName} implements RequestHandler<SQSEvent, OutputObject>  {
+public class {baseName} implements RequestHandler<S3Event, OutputObject>  {
 
     private static final Logger LOG = Logger.getLogger({baseName}.class);
 
@@ -26,11 +26,8 @@ public class {baseName} implements RequestHandler<SQSEvent, OutputObject>  {
     }
 
     @Override
-    public OutputObject handleRequest(SQSEvent sqsEvent, Context context) {
-        LOG.info("Incoming object: " + sqsEvent);
-        if (sqsEvent.getRecords() != null) {
-            LOG.info("Incoming object bodies: " + sqsEvent.getRecords().stream().map(SQSEvent.SQSMessage::getBody).collect(Collectors.joining(";")));
-        }
+    public OutputObject handleRequest(S3Event event, Context context) {
+        LOG.info("Incoming object: " + event);
         return new OutputObject().setResult("OK").setRequestId(context.getAwsRequestId());
     }
 
