@@ -1,6 +1,6 @@
 ///usr/bin/env jbang "$0" "$@" ; exit $?
 //DEPS info.picocli:picocli:4.6.1
-//DEPS io.quarkus:quarkus-devtools-registry-client:2.6.0.Final
+//DEPS io.quarkus:quarkus-devtools-registry-client:2.6.2.Final
 //DEPS org.eclipse.jgit:org.eclipse.jgit:5.13.0.202109080827-r
 //JAVA_OPTIONS "-Djava.util.logging.SimpleFormatter.format=%1$s [%4$s] %5$s%6$s%n"
 //JAVA 11
@@ -13,7 +13,9 @@ import java.nio.file.Path;
 import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.Callable;
 import java.util.function.Consumer;
@@ -24,6 +26,7 @@ import java.util.stream.StreamSupport;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.node.NullNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fasterxml.jackson.dataformat.yaml.YAMLMapper;
 import io.quarkus.registry.catalog.CatalogMapperHelper;
@@ -156,8 +159,19 @@ class catalog_check_updates implements Callable<Integer> {
             ArrayNode excludeVersions)
             throws IOException {
         List<String> newVersions = new ArrayList<>();
+        Map<String, JsonNode> map = new LinkedHashMap<>();
         List<String> versionsAlreadyRead = StreamSupport.stream(versionsNode.spliterator(), false)
-                .map(JsonNode::asText)
+                .map(node -> {
+                    String versionName;
+                    if (node.isObject()) {
+                        versionName = node.fieldNames().next();
+                        map.put(versionName, node.get(versionName));
+                    } else {
+                        versionName = node.asText();
+                        map.put(versionName, NullNode.getInstance());
+                    }
+                    return versionName;
+                })
                 .collect(Collectors.toList());
         URI metadataURL = URI.create(MessageFormat.format("{0}{1}/{2}/maven-metadata.xml",
                 Objects.toString(repository, MAVEN_CENTRAL),
@@ -174,7 +188,8 @@ class catalog_check_updates implements Callable<Integer> {
             versionsNode.removeAll();
             for (String version : versions) {
                 if (!containsValue(excludeVersions, version)) {
-                    versionsNode.add(version);
+                    versionsNode.addObject()
+                            .set(version, map.get(version));
                     newVersions.add(version);
                 }
             }
@@ -187,8 +202,14 @@ class catalog_check_updates implements Callable<Integer> {
 
     private boolean containsValue(ArrayNode arrayNode, String latestVersion) {
         for (JsonNode node : arrayNode) {
-            if (latestVersion.matches(node.asText())) {
-                return true;
+            if (node.isObject()) {
+                if (latestVersion.matches(node.fieldNames().next())) {
+                    return true;
+                }
+            } else {
+                if (latestVersion.matches(node.asText())) {
+                    return true;
+                }
             }
         }
         return false;
