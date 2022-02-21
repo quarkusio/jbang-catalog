@@ -1,6 +1,6 @@
 ///usr/bin/env jbang "$0" "$@" ; exit $?
 //DEPS info.picocli:picocli:4.6.1
-//DEPS io.quarkus:quarkus-devtools-registry-client:2.6.0.Final
+//DEPS io.quarkus:quarkus-devtools-registry-client:2.7.1.Final
 //JAVA_OPTIONS "-Djava.util.logging.SimpleFormatter.format=%1$s [%4$s] %5$s%6$s%n"
 //JAVA 11
 
@@ -19,6 +19,7 @@ import java.util.stream.Stream;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.NullNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fasterxml.jackson.dataformat.yaml.YAMLMapper;
 import io.quarkus.registry.catalog.CatalogMapperHelper;
@@ -99,7 +100,12 @@ class catalog_publish implements Callable<Integer> {
             String classifier = tree.path("classifier").asText();
             boolean classifierAsVersion = tree.path("classifier-as-version").asBoolean();
             for (JsonNode node : tree.withArray("versions")) {
-                String version = node.asText();
+                String version;
+                if (node.isObject()) {
+                    version = node.fieldNames().next();
+                } else {
+                    version = node.asText();
+                }
                 if (classifierAsVersion) {
                     classifier = version;
                 }
@@ -149,7 +155,12 @@ class catalog_publish implements Callable<Integer> {
             String groupId = tree.get("group-id").asText();
             String artifactId = tree.get("artifact-id").asText();
             for (JsonNode node : tree.withArray("versions")) {
-                String version = node.asText();
+                String version;
+                if (node.isObject()) {
+                    version = node.fieldNames().next();
+                } else {
+                    version = node.asText();
+                }
                 // Get Extension YAML
                 byte[] jsonExtension = readExtension(repository, groupId, artifactId, version);
                 // Publish
