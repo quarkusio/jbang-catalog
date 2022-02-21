@@ -26,7 +26,6 @@ import java.util.stream.StreamSupport;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
-import com.fasterxml.jackson.databind.node.NullNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fasterxml.jackson.dataformat.yaml.YAMLMapper;
 import io.quarkus.registry.catalog.CatalogMapperHelper;
@@ -105,8 +104,8 @@ class catalog_check_updates implements Callable<Integer> {
             String groupId = tree.get("group-id").asText();
             String artifactId = tree.get("artifact-id").asText();
             log.infof("Fetching latest version for %s:%s", groupId, artifactId);
-            ArrayNode versionsNode = tree.withArray("versions");
-            List<String> newVersions = populateVersions(repository, groupId, artifactId, versionsNode,
+            List<String> newVersions = populateVersions(repository, groupId, artifactId,
+                    tree.withArray("versions"),
                     tree.withArray("exclude-versions"));
             if (newVersions.isEmpty()) {
                 log.info("No new versions found");
@@ -137,8 +136,8 @@ class catalog_check_updates implements Callable<Integer> {
             String groupId = tree.get("group-id").asText();
             String artifactId = tree.get("artifact-id").asText();
             log.infof("Fetching latest version for %s:%s", groupId, artifactId);
-            ArrayNode versionsNode = tree.withArray("versions");
-            List<String> newVersions = populateVersions(repository, groupId, artifactId, versionsNode,
+            List<String> newVersions = populateVersions(repository, groupId, artifactId,
+                    tree.withArray("versions"),
                     tree.withArray("exclude-versions"));
             if (newVersions.isEmpty()) {
                 log.info("No new versions found");
@@ -168,7 +167,7 @@ class catalog_check_updates implements Callable<Integer> {
                         map.put(versionName, node.get(versionName));
                     } else {
                         versionName = node.asText();
-                        map.put(versionName, NullNode.getInstance());
+                        map.put(versionName, versionsNode.nullNode());
                     }
                     return versionName;
                 })
@@ -188,8 +187,12 @@ class catalog_check_updates implements Callable<Integer> {
             versionsNode.removeAll();
             for (String version : versions) {
                 if (!containsValue(excludeVersions, version)) {
-                    versionsNode.addObject()
-                            .set(version, map.get(version));
+                    if (map.get(version) == null || map.get(version).isNull()) {
+                        versionsNode.add(version);
+                    } else {
+                        versionsNode.addObject()
+                                .set(version, map.get(version));
+                    }
                     newVersions.add(version);
                 }
             }
