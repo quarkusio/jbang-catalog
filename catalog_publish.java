@@ -167,7 +167,7 @@ class catalog_publish implements Callable<Integer> {
                 if (node.isObject()) {
                     version = node.fieldNames().next();
                     compatibleWithQuarkusVersions = StreamSupport.stream(
-                                    node.path(version).withArray("compatible-with-quarkus-core").spliterator(), false)
+                                    node.withArray("compatible-with-quarkus-core").spliterator(), false)
                             .map(JsonNode::asText)
                             .collect(Collectors.toList());
                 } else {
@@ -292,7 +292,7 @@ class catalog_publish implements Callable<Integer> {
                         new BasicNameValuePair("groupId", groupId),
                         new BasicNameValuePair("artifactId", artifactId),
                         new BasicNameValuePair("version", version),
-                        new BasicNameValuePair("quarkusCore", version),
+                        new BasicNameValuePair("quarkusCore", quarkusCore),
                         new BasicNameValuePair("compatible", "true")
                 );
                 post.setEntity(new UrlEncodedFormEntity(params));
