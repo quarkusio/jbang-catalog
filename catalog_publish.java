@@ -67,7 +67,7 @@ class catalog_publish implements Callable<Integer> {
 
     private final ObjectMapper yamlMapper;
 
-    public static void main(String... args) {
+    public static void main(String... args) throws Exception {
         int exitCode = new CommandLine(new catalog_publish()).execute(args);
         System.exit(exitCode);
     }
@@ -148,7 +148,7 @@ class catalog_publish implements Callable<Integer> {
 
     }
 
-    private void processExtension(Path extensionYaml) {
+    void processExtension(Path extensionYaml) {
         try {
             log.infof("Processing extension %s", extensionYaml);
             log.info("---------------------------------------------------------------");
@@ -167,7 +167,7 @@ class catalog_publish implements Callable<Integer> {
                 if (node.isObject()) {
                     version = node.fieldNames().next();
                     compatibleWithQuarkusVersions = StreamSupport.stream(
-                                    node.withArray("compatible-with-quarkus-core").spliterator(), false)
+                                    node.path(version).withArray("compatible-with-quarkus-core").spliterator(), false)
                             .map(JsonNode::asText)
                             .collect(Collectors.toList());
                 } else {
