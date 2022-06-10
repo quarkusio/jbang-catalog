@@ -1,0 +1,61 @@
+///usr/bin/env jbang "$0" "$@" ; exit $?
+//JAVA 11
+//DEPS io.quarkus:quarkus-bom:$\{quarkus.version:2.6.0.Final}@pom
+//DEPS io.quarkus:quarkus-funqy-amazon-lambda
+{#for dep in dependencies.orEmpty}
+//DEPS {dep}
+{/for}
+//JAVA_OPTIONS -Djava.util.logging.manager=org.jboss.logmanager.LogManager
+//FILES application.properties
+//Q:CONFIG quarkus.banner.enabled=false
+//Q:CONFIG quarkus.funqy.export=funqFunction
+
+
+import com.amazonaws.services.lambda.runtime.events.SQSEvent;
+import org.jboss.logging.Logger;
+
+import java.util.stream.Collectors;
+
+public class {baseName} {
+
+    private static final Logger LOG = Logger.getLogger({baseName}.class);
+
+    public {baseName}() {
+
+    }
+
+    @Funq("funqFunction")
+    public OutputObject handleRequest(SQSEvent sqsEvent) {
+        LOG.info("Incoming object: " + sqsEvent);
+        if (sqsEvent.getRecords() != null) {
+            LOG.info("Incoming object bodies: " + sqsEvent.getRecords().stream().map(SQSEvent.SQSMessage::getBody).collect(Collectors.joining(";")));
+        }
+        return new OutputObject().setResult("OK");
+    }
+
+}
+
+class OutputObject {
+
+    private String result;
+
+    private String requestId;
+
+    public String getResult() {
+        return result;
+    }
+
+    public String getRequestId() {
+        return requestId;
+    }
+
+    public OutputObject setResult(String result) {
+        this.result = result;
+        return this;
+    }
+
+    public OutputObject setRequestId(String requestId) {
+        this.requestId = requestId;
+        return this;
+    }
+}
