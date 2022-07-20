@@ -1,6 +1,6 @@
 ///usr/bin/env jbang "$0" "$@" ; exit $?
 //DEPS info.picocli:picocli:4.6.1
-//DEPS io.quarkus:quarkus-devtools-registry-client:2.7.1.Final
+//DEPS io.quarkus:quarkus-devtools-registry-client:2.10.3.Final
 //DEPS org.eclipse.jgit:org.eclipse.jgit:5.13.0.202109080827-r
 //JAVA_OPTIONS "-Djava.util.logging.SimpleFormatter.format=%1$s [%4$s] %5$s%6$s%n"
 //JAVA 17
@@ -15,6 +15,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.Callable;
@@ -138,7 +139,9 @@ class catalog_check_updates implements Callable<Integer> {
             log.infof("Fetching latest version for %s:%s", groupId, artifactId);
             List<String> newVersions = populateVersions(repository, groupId, artifactId,
                     tree.withArray("versions"),
-                    tree.withArray("exclude-versions"));
+                    tree.withArray("exclude-versions"))
+                     .stream().filter(catalog_check_updates::isFinal)
+                     .collect(Collectors.toList());
             if (newVersions.isEmpty()) {
                 log.info("No new versions found");
             } else {
@@ -242,6 +245,16 @@ class catalog_check_updates implements Callable<Integer> {
         } catch (GitAPIException e) {
             throw new IOException(e);
         }
+    }
+
+    private static boolean isFinal(String version) {
+        DefaultArtifactVersion v = new DefaultArtifactVersion(version);
+        String qualifier = v.getQualifier();
+        if (qualifier == null) {
+            return true;
+        }
+        qualifier = qualifier.trim().toUpperCase(Locale.ROOT);
+        return !qualifier.startsWith("ALPHA") && !qualifier.startsWith("BETA") && !qualifier.startsWith("CR");
     }
 
     private CloseableHttpClient createHttpClient() {
