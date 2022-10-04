@@ -166,10 +166,15 @@ class catalog_publish implements Callable<Integer> {
                 List<String> compatibleWithQuarkusVersions;
                 if (node.isObject()) {
                     version = node.fieldNames().next();
-                    compatibleWithQuarkusVersions = StreamSupport.stream(
-                                    node.path(version).withArray("compatible-with-quarkus-core").spliterator(), false)
-                            .map(JsonNode::asText)
-                            .collect(Collectors.toList());
+                    JsonNode versionNode = node.path(version);
+                    if (versionNode.isObject()) {
+                        compatibleWithQuarkusVersions = StreamSupport.stream(
+                                        versionNode.withArray("compatible-with-quarkus-core").spliterator(), false)
+                                .map(JsonNode::asText)
+                                .collect(Collectors.toList());
+                    } else {
+                        compatibleWithQuarkusVersions = Collections.emptyList();
+                    }
                 } else {
                     version = node.asText();
                     compatibleWithQuarkusVersions = Collections.emptyList();
