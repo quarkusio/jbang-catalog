@@ -1,6 +1,6 @@
 ///usr/bin/env jbang "$0" "$@" ; exit $?
 //DEPS info.picocli:picocli:4.6.1
-//DEPS io.quarkus:quarkus-devtools-registry-client:2.8.0.Final
+//DEPS io.quarkus:quarkus-devtools-registry-client:2.13.0.Final
 //JAVA_OPTIONS "-Djava.util.logging.SimpleFormatter.format=%1$s [%4$s] %5$s%6$s%n"
 //JAVA 17
 
@@ -25,7 +25,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fasterxml.jackson.dataformat.yaml.YAMLMapper;
-import io.quarkus.maven.ArtifactCoords;
+import io.quarkus.maven.dependency.ArtifactCoords;
 import io.quarkus.registry.catalog.CatalogMapperHelper;
 import org.apache.http.NameValuePair;
 import org.apache.http.StatusLine;
@@ -120,7 +120,7 @@ class catalog_publish implements Callable<Integer> {
                 byte[] jsonPlatform = readCatalog(repository, groupId, artifactId, version, classifier);
                 // Publish
                 log.infof("Publishing %s:%s:%s", groupId, artifactId, version);
-                publishCatalog(platformKey, jsonPlatform, false, new ArtifactCoords(groupId, artifactId, version));
+                publishCatalog(platformKey, jsonPlatform, false, ArtifactCoords.jar(groupId, artifactId, version));
                 if (!all) {
                     // Just publish the first one
                     break;
@@ -135,7 +135,7 @@ class catalog_publish implements Callable<Integer> {
                 byte[] jsonPlatform = readCatalog(repository, groupId, artifactId, version, classifier);
                 // Publish
                 log.infof("Publishing %s:%s:%s", groupId, artifactId, version);
-                publishCatalog(platformKey, jsonPlatform, true, new ArtifactCoords(groupId, artifactId, version));
+                publishCatalog(platformKey, jsonPlatform, true, ArtifactCoords.jar(groupId, artifactId, version));
                 if (!all) {
                     // Just publish the first one
                     break;
