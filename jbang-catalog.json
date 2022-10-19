@@ -14,13 +14,13 @@
       "description": "Script that publishes an extension catalog to a registry"
     },
     "cli": {
-      "script-ref": "https://repo1.maven.org/maven2/io/quarkus/quarkus-cli/2.13.2.Final/quarkus-cli-2.13.2.Final-runner.jar"
+      "script-ref": "https://repo1.maven.org/maven2/io/quarkus/quarkus-cli/2.13.3.Final/quarkus-cli-2.13.3.Final-runner.jar"
     },
     "qs": {
-      "script-ref": "https://repo1.maven.org/maven2/io/quarkus/quarkus-cli/2.13.2.Final/quarkus-cli-2.13.2.Final-runner.jar"
+      "script-ref": "https://repo1.maven.org/maven2/io/quarkus/quarkus-cli/2.13.3.Final/quarkus-cli-2.13.3.Final-runner.jar"
     },
     "quarkus": {
-      "script-ref": "https://repo1.maven.org/maven2/io/quarkus/quarkus-cli/2.13.2.Final/quarkus-cli-2.13.2.Final-runner.jar"
+      "script-ref": "https://repo1.maven.org/maven2/io/quarkus/quarkus-cli/2.13.3.Final/quarkus-cli-2.13.3.Final-runner.jar"
     }
   },
   "templates": {
