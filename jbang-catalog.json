@@ -21,18 +21,21 @@
     },
     "quarkus": {
       "script-ref": "https://repo1.maven.org/maven2/io/quarkus/quarkus-cli/2.13.4.Final/quarkus-cli-2.13.4.Final-runner.jar"
+    },
+    "upgrade-to-quarkus3": {
+      "script-ref": "q3upgrade.java"
     }
   },
   "templates": {
     "githubbot": {
-      "description":"Example of making a github app",
       "file-refs": {
         "{basename}.java": "qbot/bot.java.qute",
         "bot-index.html": "qbot/bot-index.html",
         ".env": "qbot/.env",
         "qbot.png": "qbot/qbot.png",
         "readme.adoc": "qbot/readme.adoc.qute"
-      }
+      },
+      "description": "Example of making a github app"
     }
   }
 }
