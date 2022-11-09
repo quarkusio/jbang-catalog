@@ -56,11 +56,9 @@ class q3upgrade {
             }
 
             out.println("\n\n");
-            out.println(" Your project have now been attempted upgraded to use Quarkus 3.");
-            out.println(" Please check the changed files and do a build + test before committing the changes.");
+            out.println(" Your project has now been upgraded to use Quarkus 3.");
+            out.println(" Please check the changed files and execute a build with tests before committing the changes.");
             out.println("");
-            out.println("Best regard to and from Quarkus Community");
-
 
         } catch (IOException fe) {
             fe.printStackTrace();
