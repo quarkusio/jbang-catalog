@@ -52,7 +52,16 @@ class q3upgrade {
                 handleMaven(baseDir);
             } else {
                 err.println("Could not find pom.xml nor build.gradle file in current directory.");
+                exit(1);
             }
+
+            out.println("\n\n");
+            out.println(" Your project have now been attempted upgraded to use Quarkus 3.");
+            out.println(" Please check the changed files and do a build + test before committing the changes.");
+            out.println("");
+            out.println("Best regard to and from Quarkus Community");
+
+
         } catch (IOException fe) {
             fe.printStackTrace();
             err.println("Something went wrong in upgrade. See output above.");
@@ -115,7 +124,7 @@ class q3upgrade {
     private static void printInfo() throws InterruptedException {
         out.println("This script will attempt to upgrade your Quarkus project to be compatible with Quarkus 3.\n");
         out.println(
-                "It will change files on disk - make sure to have all files commited or some other kind of backup before running it.");
+                "It will change files on disk - make sure to have all files committed or some other kind of backup before running it.");
         out.println("Waiting 3 seconds before starting...");
         int i = 3;
         while (i > 0) {
