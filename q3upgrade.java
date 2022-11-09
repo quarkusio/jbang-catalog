@@ -115,7 +115,7 @@ class q3upgrade {
     private static void printInfo() throws InterruptedException {
         out.println("This script will attempt to upgrade your Quarkus project to be compatible with Quarkus 3.\n");
         out.println(
-                "It will change files on disk - make sure to have all files commited or some other kind of backup before running it.");
+                "It will change files on disk - make sure to have all files committed or some other kind of backup before running it.");
         out.println("Waiting 3 seconds before starting...");
         int i = 3;
         while (i > 0) {
