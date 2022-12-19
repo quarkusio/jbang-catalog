@@ -24,6 +24,12 @@
     },
     "upgrade-to-quarkus3": {
       "script-ref": "q3upgrade.java"
+    },
+    "quarkus-kill": {
+      "script-ref": "kill.java"
+    },
+    "kill": {
+      "script-ref": "kill.java"
     }
   },
   "templates": {
