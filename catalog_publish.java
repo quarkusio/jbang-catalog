@@ -1,8 +1,31 @@
 ///usr/bin/env jbang "$0" "$@" ; exit $?
 //DEPS info.picocli:picocli:4.6.1
-//DEPS io.quarkus:quarkus-devtools-registry-client:2.13.0.Final
+//DEPS io.quarkus:quarkus-devtools-registry-client:2.15.1.Final
 //JAVA_OPTIONS "-Djava.util.logging.SimpleFormatter.format=%1$s [%4$s] %5$s%6$s%n"
 //JAVA 17
+
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.fasterxml.jackson.dataformat.yaml.YAMLMapper;
+import io.quarkus.maven.dependency.ArtifactCoords;
+import io.quarkus.registry.catalog.CatalogMapperHelper;
+import org.apache.http.NameValuePair;
+import org.apache.http.StatusLine;
+import org.apache.http.client.entity.UrlEncodedFormEntity;
+import org.apache.http.client.methods.CloseableHttpResponse;
+import org.apache.http.client.methods.HttpGet;
+import org.apache.http.client.methods.HttpPatch;
+import org.apache.http.client.methods.HttpPost;
+import org.apache.http.conn.ssl.NoopHostnameVerifier;
+import org.apache.http.entity.ByteArrayEntity;
+import org.apache.http.impl.client.CloseableHttpClient;
+import org.apache.http.impl.client.HttpClients;
+import org.apache.http.message.BasicNameValuePair;
+import org.jboss.logging.Logger;
+import picocli.CommandLine;
+import picocli.CommandLine.Command;
+import picocli.CommandLine.Option;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -20,28 +43,6 @@ import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
-
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.fasterxml.jackson.dataformat.yaml.YAMLMapper;
-import io.quarkus.maven.dependency.ArtifactCoords;
-import io.quarkus.registry.catalog.CatalogMapperHelper;
-import org.apache.http.NameValuePair;
-import org.apache.http.StatusLine;
-import org.apache.http.client.entity.UrlEncodedFormEntity;
-import org.apache.http.client.methods.CloseableHttpResponse;
-import org.apache.http.client.methods.HttpGet;
-import org.apache.http.client.methods.HttpPost;
-import org.apache.http.conn.ssl.NoopHostnameVerifier;
-import org.apache.http.entity.ByteArrayEntity;
-import org.apache.http.impl.client.CloseableHttpClient;
-import org.apache.http.impl.client.HttpClients;
-import org.apache.http.message.BasicNameValuePair;
-import org.jboss.logging.Logger;
-import picocli.CommandLine;
-import picocli.CommandLine.Command;
-import picocli.CommandLine.Option;
 
 @Command(name = "catalog_publish", mixinStandardHelpOptions = true, version = "catalog_publish 0.1",
         description = "catalog_publish made with jbang")
@@ -141,6 +142,17 @@ class catalog_publish implements Callable<Integer> {
                     break;
                 }
             }
+            for (JsonNode node : tree.withArray("pinned-streams")) {
+                String stream = node.asText();
+                // Publish
+                log.infof("Patching stream %s for platform %s", stream, platformKey);
+                patchPlatformStream(platformKey, stream, true, false);
+                if (!all) {
+                    // Just publish the first one
+                    break;
+                }
+            }
+
         } catch (IOException e) {
             log.error("Error while processing platform", e);
         }
@@ -256,7 +268,8 @@ class catalog_publish implements Callable<Integer> {
         }
     }
 
-    private void publishCatalog(String platformKey, byte[] jsonPlatform, boolean pinned, ArtifactCoords artifactCoords) throws IOException {
+    private void publishCatalog(String platformKey, byte[] jsonPlatform, boolean pinned, ArtifactCoords artifactCoords)
+            throws IOException {
         try (final CloseableHttpClient httpClient = createHttpClient()) {
             HttpPost post = new HttpPost(registryURL.resolve("/admin/v1/extension/catalog"));
             post.setHeader("X-Platform", platformKey);
@@ -312,7 +325,29 @@ class catalog_publish implements Callable<Integer> {
                 }
             }
         }
+    }
 
+    private void patchPlatformStream(String platformKey, String stream, boolean pinned, boolean unlisted) throws IOException {
+        try (final CloseableHttpClient httpClient = createHttpClient()) {
+            HttpPatch post = new HttpPatch(registryURL.resolve("/admin/v1/stream/"+platformKey+"/"+stream));
+            post.setHeader("Content-Type", "application/x-www-form-urlencoded");
+            if (token != null) {
+                post.setHeader("Token", token);
+            }
+            List<NameValuePair> params = List.of(
+                    new BasicNameValuePair("pinned", String.valueOf(pinned)),
+                    new BasicNameValuePair("unlisted", String.valueOf(unlisted))
+            );
+            post.setEntity(new UrlEncodedFormEntity(params));
+            try (CloseableHttpResponse response = httpClient.execute(post)) {
+                StatusLine statusLine = response.getStatusLine();
+                if (statusLine.getStatusCode() != HttpURLConnection.HTTP_ACCEPTED) {
+                    throw new IOException(statusLine.getStatusCode() + " -> " + statusLine.getReasonPhrase());
+                } else {
+                    log.infof("Stream %s (platform %s) is now patched", stream, platformKey);
+                }
+            }
+        }
     }
 
     private CloseableHttpClient createHttpClient() {
