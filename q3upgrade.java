@@ -1,6 +1,8 @@
 ///usr/bin/env jbang "$0" "$@" ; exit $?
 //JAVA 11+
 //FILES openrewriteinit.gradle
+//DEPS org.eclipse.transformer:org.eclipse.transformer:0.5.0
+//DEPS org.slf4j:slf4j-simple:1.7.36
 
 import static java.lang.System.err;
 import static java.lang.System.exit;
@@ -8,27 +10,40 @@ import static java.lang.System.out;
 
 import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.lang.ProcessBuilder.Redirect;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.ProtocolException;
-import java.net.URI;
-import java.net.URISyntaxException;
 import java.net.URL;
-import java.nio.charset.Charset;
+import java.nio.ByteBuffer;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
+import java.util.Properties;
 import java.util.Scanner;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
+
+import org.eclipse.transformer.action.ByteData;
+import org.eclipse.transformer.action.impl.ActionContextImpl;
+import org.eclipse.transformer.action.impl.ByteDataImpl;
+import org.eclipse.transformer.action.impl.SelectionRuleImpl;
+import org.eclipse.transformer.action.impl.SignatureRuleImpl;
+import org.eclipse.transformer.action.impl.TextActionImpl;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 class q3upgrade {
 
-    static String recipeURL = "https://raw.githubusercontent.com/quarkusio/quarkus/main/jakarta/quarkus3.yml";
+    private static final String RECIPE_URL = "https://raw.githubusercontent.com/quarkusio/quarkus/main/jakarta/quarkus3.yml";
+    private static final String PACKAGE_RENAMES_URL = "https://raw.githubusercontent.com/quarkusio/quarkus/main/jakarta/jakarta-renames.properties";
 
     public static void main(String[] args) {
         new q3upgrade().run();
@@ -55,14 +70,61 @@ class q3upgrade {
                 exit(1);
             }
 
+            transformDocumentation(baseDir);
+
             out.println("\n\n");
             out.println(" Your project has now been upgraded to use Quarkus 3.");
-            out.println(" Please check the changed files and execute a build with tests before committing the changes.");
+            out.println(
+                    " Please check the changed files and execute a build with tests before committing the changes.");
             out.println("");
 
         } catch (IOException fe) {
             fe.printStackTrace();
             err.println("Something went wrong in upgrade. See output above.");
+        }
+    }
+
+    @SuppressWarnings({ "unchecked", "rawtypes" })
+    private static void transformDocumentation(Path baseDir) throws IOException {
+        try (Stream<Path> walk = Files.walk(baseDir)) {
+            List<Path> documentationFiles = walk
+                    .filter(p -> !Files.isDirectory(p))
+                    .filter(p -> p.toString().toLowerCase().endsWith(".md")
+                            || p.toString().toLowerCase().endsWith(".adoc"))
+                    .collect(Collectors.toList());
+
+            Path packageRenamesPath = downloadPackageRenames();
+
+            try (InputStream textRenamesStream = Files.newInputStream(packageRenamesPath)) {
+                Properties textRenames = new Properties();
+                textRenames.load(textRenamesStream);
+
+                Map<String, Map<String, String>> masterTextUpdates = Map.of(
+                        "*.adoc", (Map<String, String>) (Map) textRenames,
+                        "*.md", (Map<String, String>) (Map) textRenames);
+
+                Logger logger = LoggerFactory.getLogger("JakartaTransformer");
+                ActionContextImpl actionContext = new ActionContextImpl(logger,
+                        new SelectionRuleImpl(logger, Map.of(), Map.of()),
+                        new SignatureRuleImpl(logger, Map.of(), Map.of(), Map.of(),
+                                Map.of(), masterTextUpdates, Map.of(), Map.of()));
+                TextActionImpl action = new TextActionImpl(actionContext);
+
+                for (Path documentationFile : documentationFiles) {
+                    ByteData inputData = new ByteDataImpl(documentationFile.toString(),
+                            ByteBuffer.wrap(Files.readAllBytes(documentationFile)), StandardCharsets.UTF_8);
+                    ByteData outputData = action.apply(inputData);
+                    try (OutputStream documentationFileOutputStream = Files.newOutputStream(documentationFile)) {
+                        outputData.writeTo(Files.newOutputStream(documentationFile));
+                    }
+                }
+            } finally {
+                try {
+                    Files.deleteIfExists(packageRenamesPath);
+                } catch (Exception e) {
+                    // ignore
+                }
+            }
         }
     }
 
@@ -76,11 +138,28 @@ class q3upgrade {
 
         Path tempfile = downloadRecipe();
 
+        try {
+            String[] command = new String[] {
+                    mavenCmd.toString(),
+                    "org.openrewrite.maven:rewrite-maven-plugin:4.36.0:run",
+                    "-Drewrite.configLocation=" + tempfile.toAbsolutePath(),
+                    "-DactiveRecipes=io.quarkus.openrewrite.Quarkus3",
+                    "-Drewrite.pomCacheEnabled=false"
+            };
+
+            executeCommand(command);
+        } finally {
+            try {
+                Files.deleteIfExists(tempfile);
+            } catch (Exception e) {
+                // ignore
+            }
+        }
+
+        // format the sources
         String[] command = new String[] {
                 mavenCmd.toString(),
-                "org.openrewrite.maven:rewrite-maven-plugin:4.36.0:run",
-                "-Drewrite.configLocation=" + tempfile.toAbsolutePath(),
-                "-DactiveRecipes=io.quarkus.openrewrite.Quarkus3"
+                "process-sources"
         };
 
         executeCommand(command);
@@ -96,7 +175,7 @@ class q3upgrade {
         }
 
         err.println(
-                "WARNING: Deteced Gradle build file. Upgrading dependencies in Gradle not yet supported. Migration will only update sources.");
+                "WARNING: Detected Gradle build file. Upgrading dependencies in Gradle not yet supported. Migration will only update sources.");
         Path tempfile = downloadRecipe();
 
         Path tempInit = Files.createTempFile("initbuild", "gradle");
@@ -175,10 +254,18 @@ class q3upgrade {
     }
 
     private static Path downloadRecipe() throws MalformedURLException, IOException, ProtocolException {
-        URL url = new URL(recipeURL);
+        return downloadFile(RECIPE_URL, "quarkus3", ".yml");
+    }
 
-        out.println("Downloading " + recipeURL + " to temporary file.");
+    private static Path downloadPackageRenames() throws MalformedURLException, IOException, ProtocolException {
+        return downloadFile(PACKAGE_RENAMES_URL, "jakarta-renames", ".properties");
+    }
 
+    private static Path downloadFile(String downloadUrl, String prefix, String suffix)
+            throws MalformedURLException, IOException, ProtocolException {
+        URL url = new URL(downloadUrl);
+
+        out.println("Downloading " + downloadUrl + " to temporary file.");
         HttpURLConnection httpConn = (HttpURLConnection) url.openConnection();
         httpConn.setRequestMethod("GET");
         Path tempfile = null;
@@ -188,7 +275,7 @@ class q3upgrade {
                 : httpConn.getErrorStream();
         try (Scanner s = new Scanner(responseStream).useDelimiter("\\A")) {
             String response = s.hasNext() ? s.next() : "";
-            tempfile = Files.createTempFile("quarkus3", "yml");
+            tempfile = Files.createTempFile(prefix, suffix);
             Files.writeString(tempfile, response);
         }
         return tempfile;
