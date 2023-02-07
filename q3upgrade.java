@@ -141,7 +141,7 @@ class q3upgrade {
         try {
             String[] command = new String[] {
                     mavenCmd.toString(),
-                    "org.openrewrite.maven:rewrite-maven-plugin:4.36.0:run",
+                    "org.openrewrite.maven:rewrite-maven-plugin:4.39.0:run",
                     "-Drewrite.configLocation=" + tempfile.toAbsolutePath(),
                     "-DactiveRecipes=io.quarkus.openrewrite.Quarkus3",
                     "-Drewrite.pomCacheEnabled=false"
