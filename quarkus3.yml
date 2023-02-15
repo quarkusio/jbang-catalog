@@ -1,0 +1,55 @@
+---
+type: specs.openrewrite.org/v1beta/recipe
+name: io.quarkus.updates.core.quarkus30.Quarkus3
+displayName: Migrate project to Quarkus 3
+description: Update Quarkus version and migrate to Jakarta
+tags:
+  - quarkus
+  - jakarta
+recipeList:
+  - org.openrewrite.maven.ChangePropertyValue:
+      key: quarkus.platform.version
+      newValue: 3.0.0.Alpha4
+  - org.openrewrite.maven.ChangePropertyValue:
+      key: quarkus.version
+      newValue: 3.0.0.Alpha4
+  - org.openrewrite.java.migrate.jakarta.JavaxActivationMigrationToJakartaActivation
+  - org.openrewrite.java.migrate.jakarta.JavaxAnnotationMigrationToJakartaAnnotation
+  - org.openrewrite.java.migrate.jakarta.ChangeJavaxAnnotationToJakarta
+  - org.openrewrite.java.migrate.jakarta.JavaxAnnotationPackageToJakarta
+  - org.openrewrite.java.migrate.jakarta.JavaxAnnotationSecurityPackageToJakarta
+  - org.openrewrite.java.migrate.jakarta.JavaxAnnotationSqlPackageToJakarta
+  - org.openrewrite.java.migrate.jakarta.JavaxAuthenticationMigrationToJakartaAuthentication
+  - org.openrewrite.java.migrate.jakarta.JavaxAuthorizationMigrationToJakartaAuthorization
+  - org.openrewrite.java.migrate.jakarta.JavaxBatchMigrationToJakartaBatch
+  - org.openrewrite.java.migrate.jakarta.JavaxValidationMigrationToJakartaValidation
+  - org.openrewrite.java.migrate.jakarta.JavaxDecoratorToJakartaDecorator
+  - org.openrewrite.java.migrate.jakarta.JavaxEjbToJakartaEjb
+  - org.openrewrite.java.migrate.jakarta.JavaxElToJakartaEl
+  - org.openrewrite.java.migrate.jakarta.JavaxEnterpriseToJakartaEnterprise
+  - org.openrewrite.java.migrate.jakarta.JavaxFacesToJakartaFaces
+  - org.openrewrite.java.migrate.jakarta.JavaxInjectMigrationToJakartaInject
+  - org.openrewrite.java.migrate.jakarta.JavaxInterceptorToJakartaInterceptor
+  - org.openrewrite.java.migrate.jakarta.JavaxJmsToJakartaJms
+  - org.openrewrite.java.migrate.jakarta.JavaxJsonToJakartaJson
+  - org.openrewrite.java.migrate.jakarta.JavaxJwsToJakartaJws
+  - org.openrewrite.java.migrate.jakarta.JavaxMailToJakartaMail
+  - org.openrewrite.java.migrate.jakarta.JavaxPersistenceToJakartaPersistence
+  - org.openrewrite.java.migrate.jakarta.JavaxResourceToJakartaResource
+  - org.openrewrite.java.migrate.jakarta.JavaxSecurityToJakartaSecurity
+  - org.openrewrite.java.migrate.jakarta.JavaxServletToJakartaServlet
+  - org.openrewrite.java.migrate.jakarta.JavaxTransactionMigrationToJakartaTransaction
+  - org.openrewrite.java.migrate.jakarta.JavaxWebsocketToJakartaWebsocket
+  - org.openrewrite.java.migrate.jakarta.JavaxWsToJakartaWs
+  - org.openrewrite.java.migrate.jakarta.JavaxXmlBindMigrationToJakartaXmlBind
+  - org.openrewrite.java.migrate.jakarta.JavaxXmlSoapToJakartaXmlSoap
+  - org.openrewrite.java.migrate.jakarta.JavaxXmlWsMigrationToJakartaXmlWs
+  - org.openrewrite.java.migrate.jakarta.JavaxPersistenceXmlToJakartaPersistenceXml
+  - org.openrewrite.java.migrate.jakarta.JacksonJavaxToJakarta
+  - org.openrewrite.java.migrate.jakarta.RestAssuredJavaxToJakarta
+  - io.quarkus.updates.core.quarkus30.JavaxToJakartaAdditionalMigration
+  - io.quarkus.updates.core.quarkus30.AdditionalChanges
+  - io.quarkus.updates.core.quarkus30.RenameJavaxServiceFiles
+  - io.quarkus.updates.core.quarkus30.JavaxToJakartaDocumentation
+  - io.quarkus.updates.core.quarkus30.JavaxToJakartaCodestarts
+  - io.quarkus.updates.core.quarkus30.JavaxToJakartaCodestartsTests
