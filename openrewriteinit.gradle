@@ -24,7 +24,13 @@ allprojects {
     }
     rewrite {
       configFile = project.getRootProject().file("%rewritefile%")
-      activeRecipe("io.quarkus.openrewrite.Quarkus3")
+      activeRecipe("io.quarkus.updates.core.quarkus30.Quarkus3")
+      plainTextMask("**/META-INF/services/**",
+          "**/*.txt",
+          "**/*.adoc",
+          "**/*.md",
+          "**/src/main/codestarts/**/*.java",
+          "**/src/test/resources/__snapshots__/**/*.java")
     }
 }
 
