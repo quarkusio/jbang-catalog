@@ -2,6 +2,7 @@
 //DEPS info.picocli:picocli:4.6.3
 //DEPS org.jboss.forge.roaster:roaster-jdt:2.28.0.Final
 //DEPS io.quarkus:quarkus-ide-config:2.16.3.Final
+//DESCRIPTION This command will format your sources using the same formatting rules used in the Quarkus Core project
 
 import java.io.IOException;
 import java.io.InputStream;
