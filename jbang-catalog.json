@@ -31,10 +31,7 @@
     "kill": {
       "script-ref": "kill.java"
     },
-    "quarkus-format": {
-      "script-ref": "fmt.java"
-    },
-    "format": {
+    "quarkus-fmt": {
       "script-ref": "fmt.java"
     },
     "fmt": {
