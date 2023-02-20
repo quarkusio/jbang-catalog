@@ -2,7 +2,9 @@
 //DEPS info.picocli:picocli:4.6.3
 //DEPS org.zeroturnaround:zt-exec:1.12
 //DEPS org.slf4j:slf4j-simple:1.7.30
+//DEPS io.smallrye.common:smallrye-common-os:2.0.0
 
+import io.smallrye.common.os.OS;
 import picocli.CommandLine;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
@@ -36,7 +38,7 @@ class kill implements Callable<Integer> {
 
         System.out.println("Scanning for processes listening on port " + port + " ...");
 
-        if (getOS() == OS.WINDOWS) {
+        if (OS.WINDOWS.isCurrent()) {
             List<String> args = List.of("netstat", "-ano");
             String output = new ProcessExecutor().command(args)
                     .readOutput(true).execute().outputUTF8();
@@ -92,34 +94,9 @@ class kill implements Callable<Integer> {
         }
 
         if (kills.isEmpty()) {
-            out.println("No process killed or not found any proces on port " + port);
+            out.println("No process killed or not found any process on port " + port);
             out.println("If looking for a different port use --port <port>");
         }
         return 0;
-    }
-
-    // from
-    // https://stackoverflow.com/questions/228477/how-do-i-programmatically-determine-operating-system-in-java
-    static public enum OS {
-        WINDOWS, LINUX, MAC, SOLARIS
-    };// Operating systems.
-
-    private static OS os = null;
-
-    public static OS getOS() {
-        if (os == null) {
-            String operSys = System.getProperty("os.name").toLowerCase();
-            if (operSys.contains("win")) {
-                os = OS.WINDOWS;
-            } else if (operSys.contains("nix") || operSys.contains("nux")
-                    || operSys.contains("aix")) {
-                os = OS.LINUX;
-            } else if (operSys.contains("mac")) {
-                os = OS.MAC;
-            } else if (operSys.contains("sunos")) {
-                os = OS.SOLARIS;
-            }
-        }
-        return os;
     }
 }
