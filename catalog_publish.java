@@ -1,6 +1,6 @@
 ///usr/bin/env jbang "$0" "$@" ; exit $?
 //DEPS info.picocli:picocli:4.6.1
-//DEPS io.quarkus:quarkus-devtools-registry-client:2.15.1.Final
+//DEPS io.quarkus:quarkus-devtools-registry-client:2.16.3.Final
 //JAVA_OPTIONS "-Djava.util.logging.SimpleFormatter.format=%1$s [%4$s] %5$s%6$s%n"
 //JAVA 17
 
@@ -10,6 +10,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fasterxml.jackson.dataformat.yaml.YAMLMapper;
 import io.quarkus.maven.dependency.ArtifactCoords;
 import io.quarkus.registry.catalog.CatalogMapperHelper;
+import io.quarkus.registry.catalog.ExtensionCatalog;
 import org.apache.http.NameValuePair;
 import org.apache.http.StatusLine;
 import org.apache.http.client.entity.UrlEncodedFormEntity;
@@ -27,6 +28,7 @@ import picocli.CommandLine;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
 
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.HttpURLConnection;
@@ -37,6 +39,7 @@ import java.nio.file.Path;
 import java.text.MessageFormat;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.Callable;
 import java.util.function.Consumer;
@@ -121,7 +124,9 @@ class catalog_publish implements Callable<Integer> {
                 byte[] jsonPlatform = readCatalog(repository, groupId, artifactId, version, classifier);
                 // Publish
                 log.infof("Publishing %s:%s:%s", groupId, artifactId, version);
-                publishCatalog(platformKey, jsonPlatform, false, ArtifactCoords.jar(groupId, artifactId, version));
+                publishCatalog(platformKey, jsonPlatform, false, "C" , ArtifactCoords.jar(groupId, artifactId, version));
+                // Publish platform members
+                publishCatalogMembers(jsonPlatform, repository);
                 if (!all) {
                     // Just publish the first one
                     break;
@@ -136,7 +141,9 @@ class catalog_publish implements Callable<Integer> {
                 byte[] jsonPlatform = readCatalog(repository, groupId, artifactId, version, classifier);
                 // Publish
                 log.infof("Publishing %s:%s:%s", groupId, artifactId, version);
-                publishCatalog(platformKey, jsonPlatform, true, ArtifactCoords.jar(groupId, artifactId, version));
+                publishCatalog(platformKey, jsonPlatform, true, "C", ArtifactCoords.jar(groupId, artifactId, version));
+                // Publish platform members
+                publishCatalogMembers(jsonPlatform, repository);
                 if (!all) {
                     // Just publish the first one
                     break;
@@ -160,6 +167,28 @@ class catalog_publish implements Callable<Integer> {
 
     }
 
+    private void publishCatalogMembers(byte[] parentPlatform, String repository) throws IOException
+    {
+        ExtensionCatalog catalog = CatalogMapperHelper.deserialize(new ByteArrayInputStream(parentPlatform),
+                io.quarkus.registry.catalog.ExtensionCatalogImpl.Builder.class);
+        Map<String, Object> platformRelease = (Map<String, Object>) catalog.getMetadata().get("platform-release");
+        List<String> members = (List<String>) platformRelease.get("members");
+        for (String member : members) {
+            // Skip this catalog
+            if (!member.equals(catalog.getId())) {
+                ArtifactCoords memberCoords = ArtifactCoords.fromString(member);
+                String groupId = memberCoords.getGroupId();
+                String artifactId = memberCoords.getArtifactId();
+                String version = memberCoords.getVersion();
+                String classifier = version;
+                byte[] jsonPlatform = readCatalog(repository, groupId, artifactId, version, classifier);
+                // Publish
+                log.infof("Publishing %s:%s:%s", memberCoords.getGroupId(), memberCoords.getArtifactId(), memberCoords.getVersion());
+                String platformKey = memberCoords.getGroupId() + ":" + memberCoords.getArtifactId();
+                publishCatalog(platformKey, jsonPlatform, false, "M", memberCoords);
+            }
+        }
+    }
     void processExtension(Path extensionYaml) {
         try {
             log.infof("Processing extension %s", extensionYaml);
@@ -268,12 +297,13 @@ class catalog_publish implements Callable<Integer> {
         }
     }
 
-    private void publishCatalog(String platformKey, byte[] jsonPlatform, boolean pinned, ArtifactCoords artifactCoords)
+    private void publishCatalog(String platformKey, byte[] jsonPlatform, boolean pinned, String platformType, ArtifactCoords artifactCoords)
             throws IOException {
         try (final CloseableHttpClient httpClient = createHttpClient()) {
             HttpPost post = new HttpPost(registryURL.resolve("/admin/v1/extension/catalog"));
             post.setHeader("X-Platform", platformKey);
             post.setHeader("X-Platform-Pinned", Boolean.toString(pinned));
+            post.setHeader("X-Platform-Type", platformType);
             post.setHeader("X-Group-Id", artifactCoords.getGroupId());
             post.setHeader("X-Artifact-Id", artifactCoords.getArtifactId());
             post.setHeader("X-Version", artifactCoords.getVersion());
