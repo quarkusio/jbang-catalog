@@ -81,12 +81,13 @@ class q3upgrade {
         Path recipe = downloadRecipe();
 
         try {
-            String[] command = new String[] { "mvn",
+            String[] command = new String[] { mavenCmd.toString(),
                     "-e",
                     "org.openrewrite.maven:rewrite-maven-plugin:4.39.0:run",
-                    "-DplainTextMasks=**/META-INF/services/**,**/*.txt,**/*.adoc,**/*.md,**/src/main/codestarts/**/*.java,**/src/test/resources/__snapshots__/**/*.java,**/*.kt",
-                    "-Drewrite.configLocation=" + recipe.toAbsolutePath(),
-                    "-DactiveRecipes=io.quarkus.updates.core.quarkus30.Quarkus3", "-Drewrite.pomCacheEnabled=false" };
+                    "-D\"plainTextMasks=**/META-INF/services/**,**/*.txt,**/*.adoc,**/*.md,**/src/main/codestarts/**/*.java,**/src/test/resources/__snapshots__/**/*.java,**/*.kt\"",
+                    "-D\"rewrite.configLocation=" + recipe.toAbsolutePath() + "\"",
+                    "-D\"activeRecipes=io.quarkus.updates.core.quarkus30.Quarkus3\"",
+                    "-D\"rewrite.pomCacheEnabled=false\"" };
 
             executeCommand(command);
         } finally {
