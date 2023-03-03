@@ -2,7 +2,6 @@
 //JAVA 11+
 //FILES openrewriteinit.gradle
 //FILES quarkus3.yml
-//DEPS org.eclipse.transformer:org.eclipse.transformer:0.5.0
 //DEPS org.slf4j:slf4j-simple:1.7.36
 
 import static java.lang.System.err;
@@ -14,13 +13,11 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.io.OutputStream;
 import java.lang.ProcessBuilder.Redirect;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.ProtocolException;
 import java.net.URL;
-import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -28,20 +25,9 @@ import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Map;
-import java.util.Properties;
 import java.util.Scanner;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-
-import org.eclipse.transformer.action.ByteData;
-import org.eclipse.transformer.action.impl.ActionContextImpl;
-import org.eclipse.transformer.action.impl.ByteDataImpl;
-import org.eclipse.transformer.action.impl.SelectionRuleImpl;
-import org.eclipse.transformer.action.impl.SignatureRuleImpl;
-import org.eclipse.transformer.action.impl.TextActionImpl;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 class q3upgrade {
 
@@ -230,7 +216,7 @@ class q3upgrade {
             return mergedRecipe;
         } finally {
             try {
-            Files.deleteIfExists(baseRecipe);
+                Files.deleteIfExists(baseRecipe);
             } catch (Exception e) {
             // ignore
             }
