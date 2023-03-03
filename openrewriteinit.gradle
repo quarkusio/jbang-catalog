@@ -30,7 +30,8 @@ allprojects {
           "**/*.adoc",
           "**/*.md",
           "**/src/main/codestarts/**/*.java",
-          "**/src/test/resources/__snapshots__/**/*.java")
+          "**/src/test/resources/__snapshots__/**/*.java",
+          "**/*.kt")
     }
 }
 
