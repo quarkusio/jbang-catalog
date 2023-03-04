@@ -50,7 +50,8 @@ recipeList:
   - io.quarkus.updates.core.quarkus30.JavaxToJakartaAdditionalMigration
   - io.quarkus.updates.core.quarkus30.AdditionalChanges
   - io.quarkus.updates.core.quarkus30.RenameJavaxServiceFiles
-  - io.quarkus.updates.core.quarkus30.JavaxToJakartaDocumentation
+  - io.quarkus.updates.core.quarkus30.JavaxToJakartaDocumentationAdoc
+  - io.quarkus.updates.core.quarkus30.JavaxToJakartaDocumentationMd
   - io.quarkus.updates.core.quarkus30.JavaxToJakartaCodestarts
   - io.quarkus.updates.core.quarkus30.JavaxToJakartaCodestartsTests
   - io.quarkus.updates.core.quarkus30.JavaxToJakartaKotlin
