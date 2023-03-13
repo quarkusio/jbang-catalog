@@ -43,6 +43,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.Callable;
 import java.util.function.Consumer;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
@@ -83,26 +84,31 @@ class catalog_publish implements Callable<Integer> {
 
     @Override
     public Integer call() throws Exception {
-        list(workingDirectory.resolve("platforms"), this::processCatalog);
-        list(workingDirectory.resolve("extensions"), this::processExtension);
+        boolean error1 = list(workingDirectory.resolve("platforms"), this::processCatalog);
+        boolean error2 = list(workingDirectory.resolve("extensions"), this::processExtension);
+        if(error1 || error2) {
+            return 1;
+        }
         return 0;
     }
 
-    private void list(Path path, Consumer<Path> consumer) throws IOException {
+    private boolean list(Path path, Function<Path, Boolean> consumer) throws IOException {
+        boolean error;
         try (Stream<Path> files = Files.list(path)) {
-            files.filter(file -> file.getFileName().toString().endsWith(".yaml"))
-                    .forEach(consumer);
+            error = files.filter(file -> file.getFileName().toString().endsWith(".yaml"))
+                    .map(consumer).anyMatch(result -> result);
         }
+        return error;
     }
 
-    private void processCatalog(Path platformYaml) {
+    private boolean processCatalog(Path platformYaml) {
         try {
             log.infof("Processing platform %s", platformYaml);
             log.info("---------------------------------------------------------------");
             ObjectNode tree = (ObjectNode) yamlMapper.readTree(platformYaml.toFile());
             if (!tree.path("enabled").asBoolean(true)) {
                 log.info("Platform is disabled. Skipping");
-                return;
+                return false;
             }
             String repository = tree.path("maven-repository").asText(MAVEN_CENTRAL);
             String groupId = tree.get("group-id").asText();
@@ -162,9 +168,10 @@ class catalog_publish implements Callable<Integer> {
 
         } catch (IOException e) {
             log.error("Error while processing platform", e);
+            return true;
         }
         log.info("---------------------------------------------------------------");
-
+        return false;
     }
 
     private void publishCatalogMembers(byte[] parentPlatform, String repository) throws IOException
@@ -189,7 +196,7 @@ class catalog_publish implements Callable<Integer> {
             }
         }
     }
-    void processExtension(Path extensionYaml) {
+    boolean processExtension(Path extensionYaml) {
         try {
             log.infof("Processing extension %s", extensionYaml);
             log.info("---------------------------------------------------------------");
@@ -197,7 +204,7 @@ class catalog_publish implements Callable<Integer> {
             ObjectNode tree = (ObjectNode) yamlMapper.readTree(extensionYaml.toFile());
             if (!tree.path("enabled").asBoolean(true)) {
                 log.info("Extension is disabled. Skipping");
-                return;
+                return false;
             }
             String repository = tree.path("maven-repository").asText(MAVEN_CENTRAL);
             String groupId = tree.get("group-id").asText();
@@ -235,8 +242,10 @@ class catalog_publish implements Callable<Integer> {
             }
         } catch (IOException e) {
             log.error("Error while processing extension", e);
+            return true;
         }
         log.info("---------------------------------------------------------------");
+        return false;
     }
 
     private byte[] readCatalog(String repository, String groupId, String artifactId, String version, String classifier)
