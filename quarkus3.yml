@@ -9,10 +9,10 @@ tags:
 recipeList:
   - org.openrewrite.maven.ChangePropertyValue:
       key: quarkus.platform.version
-      newValue: 3.0.0.Alpha4
+      newValue: 3.0.0.Alpha5
   - org.openrewrite.maven.ChangePropertyValue:
       key: quarkus.version
-      newValue: 3.0.0.Alpha4
+      newValue: 3.0.0.Alpha5
   - org.openrewrite.java.migrate.jakarta.JavaxActivationMigrationToJakartaActivation
   - org.openrewrite.java.migrate.jakarta.JavaxAnnotationMigrationToJakartaAnnotation
   - org.openrewrite.java.migrate.jakarta.ChangeJavaxAnnotationToJakarta
@@ -49,6 +49,10 @@ recipeList:
   - org.openrewrite.java.migrate.jakarta.RestAssuredJavaxToJakarta
   - io.quarkus.updates.core.quarkus30.JavaxToJakartaAdditionalMigration
   - io.quarkus.updates.core.quarkus30.AdditionalChanges
+  - io.quarkus.updates.core.quarkus30.ApplicationProperties
+  - io.quarkus.updates.core.quarkus30.ApplicationYml
+  - io.quarkus.updates.core.quarkus30.ApplicationYaml
+  - io.quarkus.updates.core.quarkus30.UpgradeQuarkiverse
   - io.quarkus.updates.core.quarkus30.RenameJavaxServiceFiles
   - io.quarkus.updates.core.quarkus30.JavaxToJakartaDocumentationAdoc
   - io.quarkus.updates.core.quarkus30.JavaxToJakartaDocumentationMd
