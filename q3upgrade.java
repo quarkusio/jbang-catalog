@@ -83,7 +83,7 @@ class q3upgrade {
         try {
             String[] command = new String[] { mavenCmd.toString(),
                     "-e",
-                    "org.openrewrite.maven:rewrite-maven-plugin:4.41.0:run",
+                    "org.openrewrite.maven:rewrite-maven-plugin:4.43.0:run",
                     "-D\"plainTextMasks=**/META-INF/services/**,**/*.txt,**/*.adoc,**/*.md,**/src/main/codestarts/**/*.java,**/src/test/resources/__snapshots__/**/*.java,**/*.kt\"",
                     "-D\"rewrite.configLocation=" + recipe.toAbsolutePath() + "\"",
                     "-D\"activeRecipes=io.quarkus.updates.core.quarkus30.Quarkus3\"",
