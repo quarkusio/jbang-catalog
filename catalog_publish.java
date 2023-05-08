@@ -298,7 +298,7 @@ class catalog_publish implements Callable<Integer> {
                     log.info("Conflict, version already exists. Ignoring");
                     return;
                 }
-                if (statusCode != HttpURLConnection.HTTP_ACCEPTED && statusCode != HttpURLConnection.HTTP_CREATED) {
+                if (statusCode >= 300) {
                     throw new IOException(statusLine.getStatusCode() + " -> " + statusLine.getReasonPhrase());
                 } else {
                     log.info("Extension published");
@@ -329,7 +329,7 @@ class catalog_publish implements Callable<Integer> {
                     log.info("Conflict, version already exists. Ignoring");
                     return;
                 }
-                if (statusCode != HttpURLConnection.HTTP_ACCEPTED && statusCode != HttpURLConnection.HTTP_CREATED) {
+                if (statusCode >= 300) {
                     throw new IOException(statusLine.getStatusCode() + " -> " + statusLine.getReasonPhrase());
                 } else {
                     log.info("Platform published");
@@ -358,7 +358,7 @@ class catalog_publish implements Callable<Integer> {
                 try (CloseableHttpResponse response = httpClient.execute(post)) {
                     StatusLine statusLine = response.getStatusLine();
                     int statusCode = statusLine.getStatusCode();
-                    if (statusCode != HttpURLConnection.HTTP_ACCEPTED && statusCode != HttpURLConnection.HTTP_CREATED) {
+                    if (statusCode >= 300) {
                         throw new IOException(statusLine.getStatusCode() + " -> " + statusLine.getReasonPhrase());
                     } else {
                         log.infof("Extension %s:%s:%s is now marked as compatible with Quarkus %s", groupId, artifactId,
@@ -384,7 +384,7 @@ class catalog_publish implements Callable<Integer> {
             try (CloseableHttpResponse response = httpClient.execute(post)) {
                 StatusLine statusLine = response.getStatusLine();
                 int statusCode = statusLine.getStatusCode();
-                if (statusCode != HttpURLConnection.HTTP_ACCEPTED && statusCode != HttpURLConnection.HTTP_CREATED) {
+                if (statusCode >= 300) {
                     throw new IOException(statusLine.getStatusCode() + " -> " + statusLine.getReasonPhrase());
                 } else {
                     log.infof("Stream %s (platform %s) is now patched", stream, platformKey);
