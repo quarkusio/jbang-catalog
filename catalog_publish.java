@@ -293,11 +293,12 @@ class catalog_publish implements Callable<Integer> {
             post.setEntity(new ByteArrayEntity(extension));
             try (CloseableHttpResponse response = httpClient.execute(post)) {
                 StatusLine statusLine = response.getStatusLine();
-                if (statusLine.getStatusCode() == HttpURLConnection.HTTP_CONFLICT) {
+                int statusCode = statusLine.getStatusCode();
+                if (statusCode == HttpURLConnection.HTTP_CONFLICT) {
                     log.info("Conflict, version already exists. Ignoring");
                     return;
                 }
-                if (statusLine.getStatusCode() != HttpURLConnection.HTTP_ACCEPTED) {
+                if (statusCode != HttpURLConnection.HTTP_ACCEPTED && statusCode != HttpURLConnection.HTTP_CREATED) {
                     throw new IOException(statusLine.getStatusCode() + " -> " + statusLine.getReasonPhrase());
                 } else {
                     log.info("Extension published");
@@ -323,11 +324,12 @@ class catalog_publish implements Callable<Integer> {
             post.setEntity(new ByteArrayEntity(jsonPlatform));
             try (CloseableHttpResponse response = httpClient.execute(post)) {
                 StatusLine statusLine = response.getStatusLine();
-                if (statusLine.getStatusCode() == HttpURLConnection.HTTP_CONFLICT) {
+                int statusCode = statusLine.getStatusCode();
+                if (statusCode == HttpURLConnection.HTTP_CONFLICT) {
                     log.info("Conflict, version already exists. Ignoring");
                     return;
                 }
-                if (statusLine.getStatusCode() != HttpURLConnection.HTTP_ACCEPTED) {
+                if (statusCode != HttpURLConnection.HTTP_ACCEPTED && statusCode != HttpURLConnection.HTTP_CREATED) {
                     throw new IOException(statusLine.getStatusCode() + " -> " + statusLine.getReasonPhrase());
                 } else {
                     log.info("Platform published");
@@ -355,7 +357,8 @@ class catalog_publish implements Callable<Integer> {
                 post.setEntity(new UrlEncodedFormEntity(params));
                 try (CloseableHttpResponse response = httpClient.execute(post)) {
                     StatusLine statusLine = response.getStatusLine();
-                    if (statusLine.getStatusCode() != HttpURLConnection.HTTP_ACCEPTED) {
+                    int statusCode = statusLine.getStatusCode();
+                    if (statusCode != HttpURLConnection.HTTP_ACCEPTED && statusCode != HttpURLConnection.HTTP_CREATED) {
                         throw new IOException(statusLine.getStatusCode() + " -> " + statusLine.getReasonPhrase());
                     } else {
                         log.infof("Extension %s:%s:%s is now marked as compatible with Quarkus %s", groupId, artifactId,
@@ -380,7 +383,8 @@ class catalog_publish implements Callable<Integer> {
             post.setEntity(new UrlEncodedFormEntity(params));
             try (CloseableHttpResponse response = httpClient.execute(post)) {
                 StatusLine statusLine = response.getStatusLine();
-                if (statusLine.getStatusCode() != HttpURLConnection.HTTP_ACCEPTED) {
+                int statusCode = statusLine.getStatusCode();
+                if (statusCode != HttpURLConnection.HTTP_ACCEPTED && statusCode != HttpURLConnection.HTTP_CREATED) {
                     throw new IOException(statusLine.getStatusCode() + " -> " + statusLine.getReasonPhrase());
                 } else {
                     log.infof("Stream %s (platform %s) is now patched", stream, platformKey);
