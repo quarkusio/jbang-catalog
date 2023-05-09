@@ -44,6 +44,9 @@ class kill implements Callable<Integer> {
                     .readOutput(true).execute().outputUTF8();
 
             output.lines().forEach(line -> {
+                if (!line.contains("LISTEN")) {
+                    return;
+                }
                 String[] parts = line.split("\\s+");
                 if (parts.length >= 5) {
                     String listen = parts[2];
