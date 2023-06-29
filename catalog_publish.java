@@ -266,6 +266,13 @@ class catalog_publish implements Callable<Integer> {
                     version,
                     classifier));
         }
+        if ("file".equals(platformJson.getScheme())) {
+            var path = Path.of(platformJson);
+            if (!Files.exists(path)) {
+                throw new IOException(path + " does not exist");
+            }
+            return Files.readAllBytes(path);
+        }
         try (CloseableHttpClient httpClient = createHttpClient();
                 InputStream is = httpClient.execute(new HttpGet(platformJson)).getEntity().getContent()) {
             return is.readAllBytes();
