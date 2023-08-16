@@ -22,9 +22,6 @@
     "quarkus": {
       "script-ref": "https://repo1.maven.org/maven2/io/quarkus/quarkus-cli/3.2.4.Final/quarkus-cli-3.2.4.Final-runner.jar"
     },
-    "upgrade-to-quarkus3": {
-      "script-ref": "q3upgrade.java"
-    },
     "quarkus-kill": {
       "script-ref": "kill.java"
     },
