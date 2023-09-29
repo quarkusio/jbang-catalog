@@ -134,7 +134,7 @@ class catalog_publish implements Callable<Integer> {
                 log.infof("Publishing %s:%s:%s", groupId, artifactId, version);
                 publishCatalog(platformKey, jsonPlatform, false, "C", ArtifactCoords.jar(groupId, artifactId, version));
                 // Publish platform members
-                publishCatalogMembers(jsonPlatform, rguepository);
+                publishCatalogMembers(jsonPlatform, repository);
                 if (!all) {
                     // Just publish the first one
                     break;
