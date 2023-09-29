@@ -1,11 +1,12 @@
 ///usr/bin/env jbang "$0" "$@" ; exit $?
 //DEPS info.picocli:picocli:4.6.1
-//DEPS io.quarkus:quarkus-devtools-registry-client:2.16.3.Final
+//DEPS io.quarkus:quarkus-devtools-registry-client:3.4.1
 //JAVA_OPTIONS "-Djava.util.logging.SimpleFormatter.format=%1$s [%4$s] %5$s%6$s%n"
 //JAVA 17
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fasterxml.jackson.dataformat.yaml.YAMLMapper;
 import io.quarkus.maven.dependency.ArtifactCoords;
@@ -38,11 +39,12 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.text.MessageFormat;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 import java.util.concurrent.Callable;
-import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -56,23 +58,23 @@ class catalog_publish implements Callable<Integer> {
 
     private static final Logger log = Logger.getLogger(catalog_publish.class);
 
-    @Option(names = { "-w", "--working-directory" }, description = "The working directory", required = true)
+    @Option(names = {"-w", "--working-directory"}, description = "The working directory", required = true)
     Path workingDirectory;
 
-    @Option(names = { "-u",
-            "--registry-url" }, description = "The Extension Registry URL", required = true, defaultValue = "${REGISTRY_URL}")
+    @Option(names = {"-u",
+            "--registry-url"}, description = "The Extension Registry URL", required = true, defaultValue = "${REGISTRY_URL}")
     URI registryURL;
 
-    @Option(names = { "-t",
-            "--token" }, description = "The token to use when authenticating to the admin endpoint", defaultValue = "${REGISTRY_TOKEN}")
+    @Option(names = {"-t",
+            "--token"}, description = "The token to use when authenticating to the admin endpoint", defaultValue = "${REGISTRY_TOKEN}")
     String token;
 
-    @Option(names = { "-a", "--all" }, description = "Publish all versions? If false, just the latest is published")
+    @Option(names = {"-a", "--all"}, description = "Publish all versions? If false, just the latest is published")
     boolean all;
 
     private final ObjectMapper yamlMapper;
 
-    public static void main(String... args) throws Exception {
+    public static void main(String... args) {
         int exitCode = new CommandLine(new catalog_publish()).execute(args);
         System.exit(exitCode);
     }
@@ -86,7 +88,7 @@ class catalog_publish implements Callable<Integer> {
     public Integer call() throws Exception {
         boolean error1 = list(workingDirectory.resolve("platforms"), this::processCatalog);
         boolean error2 = list(workingDirectory.resolve("extensions"), this::processExtension);
-        if(error1 || error2) {
+        if (error1 || error2) {
             return 1;
         }
         return 0;
@@ -96,7 +98,7 @@ class catalog_publish implements Callable<Integer> {
         boolean error;
         try (Stream<Path> files = Files.list(path)) {
             error = files.filter(file -> file.getFileName().toString().endsWith(".yaml"))
-                    .map(consumer).anyMatch(result -> result);
+                    .anyMatch(consumer::apply);
         }
         return error;
     }
@@ -130,9 +132,9 @@ class catalog_publish implements Callable<Integer> {
                 byte[] jsonPlatform = readCatalog(repository, groupId, artifactId, version, classifier);
                 // Publish
                 log.infof("Publishing %s:%s:%s", groupId, artifactId, version);
-                publishCatalog(platformKey, jsonPlatform, false, "C" , ArtifactCoords.jar(groupId, artifactId, version));
+                publishCatalog(platformKey, jsonPlatform, false, "C", ArtifactCoords.jar(groupId, artifactId, version));
                 // Publish platform members
-                publishCatalogMembers(jsonPlatform, repository);
+                publishCatalogMembers(jsonPlatform, rguepository);
                 if (!all) {
                     // Just publish the first one
                     break;
@@ -155,11 +157,19 @@ class catalog_publish implements Callable<Integer> {
                     break;
                 }
             }
-            for (JsonNode node : tree.withArray("pinned-streams")) {
-                String stream = node.asText();
+            Set<String> pinnedStreams = toSet(tree.withArray("pinned-streams"));
+            Set<String> unlistedStreams = toSet(tree.withArray("unlisted-streams"));
+            Set<String> ltsStreams = toSet(tree.withArray("lts-streams"));
+
+            Set<String> streams = new HashSet<>();
+            streams.addAll(pinnedStreams);
+            streams.addAll(unlistedStreams);
+            streams.addAll(ltsStreams);
+
+            for (String stream : streams) {
                 // Publish
                 log.infof("Patching stream %s for platform %s", stream, platformKey);
-                patchPlatformStream(platformKey, stream, true, false);
+                patchPlatformStream(platformKey, stream, pinnedStreams.contains(stream), unlistedStreams.contains(stream), ltsStreams.contains(stream));
                 if (!all) {
                     // Just publish the first one
                     break;
@@ -174,8 +184,7 @@ class catalog_publish implements Callable<Integer> {
         return false;
     }
 
-    private void publishCatalogMembers(byte[] parentPlatform, String repository) throws IOException
-    {
+    private void publishCatalogMembers(byte[] parentPlatform, String repository) throws IOException {
         ExtensionCatalog catalog = CatalogMapperHelper.deserialize(new ByteArrayInputStream(parentPlatform),
                 io.quarkus.registry.catalog.ExtensionCatalogImpl.Builder.class);
         Map<String, Object> platformRelease = (Map<String, Object>) catalog.getMetadata().get("platform-release");
@@ -196,6 +205,7 @@ class catalog_publish implements Callable<Integer> {
             }
         }
     }
+
     boolean processExtension(Path extensionYaml) {
         try {
             log.infof("Processing extension %s", extensionYaml);
@@ -232,7 +242,7 @@ class catalog_publish implements Callable<Integer> {
                 // Publish
                 log.infof("Publishing %s:%s:%s", groupId, artifactId, version);
                 publishExtension(jsonExtension);
-                if (compatibleWithQuarkusVersions.size() > 0) {
+                if (!compatibleWithQuarkusVersions.isEmpty()) {
                     publishCompatibility(groupId, artifactId, version, compatibleWithQuarkusVersions);
                 }
                 if (!all) {
@@ -274,7 +284,7 @@ class catalog_publish implements Callable<Integer> {
             return Files.readAllBytes(path);
         }
         try (CloseableHttpClient httpClient = createHttpClient();
-                InputStream is = httpClient.execute(new HttpGet(platformJson)).getEntity().getContent()) {
+             InputStream is = httpClient.execute(new HttpGet(platformJson)).getEntity().getContent()) {
             return is.readAllBytes();
         }
     }
@@ -346,7 +356,7 @@ class catalog_publish implements Callable<Integer> {
     }
 
     private void publishCompatibility(String groupId, String artifactId, String version,
-            List<String> compatibleWithQuarkusVersions) throws IOException {
+                                      List<String> compatibleWithQuarkusVersions) throws IOException {
         try (final CloseableHttpClient httpClient = createHttpClient()) {
             HttpPost post = new HttpPost(registryURL.resolve("/admin/v1/extension/compat"));
             post.setHeader("Content-Type", "application/x-www-form-urlencoded");
@@ -376,16 +386,17 @@ class catalog_publish implements Callable<Integer> {
         }
     }
 
-    private void patchPlatformStream(String platformKey, String stream, boolean pinned, boolean unlisted) throws IOException {
+    private void patchPlatformStream(String platformKey, String stream, boolean pinned, boolean unlisted, boolean lts) throws IOException {
         try (final CloseableHttpClient httpClient = createHttpClient()) {
-            HttpPatch post = new HttpPatch(registryURL.resolve("/admin/v1/stream/"+platformKey+"/"+stream));
+            HttpPatch post = new HttpPatch(registryURL.resolve("/admin/v1/stream/" + platformKey + "/" + stream));
             post.setHeader("Content-Type", "application/x-www-form-urlencoded");
             if (token != null) {
                 post.setHeader("Token", token);
             }
             List<NameValuePair> params = List.of(
                     new BasicNameValuePair("pinned", String.valueOf(pinned)),
-                    new BasicNameValuePair("unlisted", String.valueOf(unlisted))
+                    new BasicNameValuePair("unlisted", String.valueOf(unlisted)),
+                    new BasicNameValuePair("lts", String.valueOf(lts))
             );
             post.setEntity(new UrlEncodedFormEntity(params));
             try (CloseableHttpResponse response = httpClient.execute(post)) {
@@ -398,6 +409,12 @@ class catalog_publish implements Callable<Integer> {
                 }
             }
         }
+    }
+
+    private Set<String> toSet(ArrayNode node) {
+        return StreamSupport.stream(node.spliterator(), false)
+                .map(JsonNode::asText)
+                .collect(Collectors.toSet());
     }
 
     private CloseableHttpClient createHttpClient() {
