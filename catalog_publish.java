@@ -1,6 +1,6 @@
 ///usr/bin/env jbang "$0" "$@" ; exit $?
 //DEPS info.picocli:picocli:4.6.1
-//DEPS io.quarkus:quarkus-devtools-registry-client:3.4.1
+//DEPS io.quarkus:quarkus-devtools-registry-client:3.7.1
 //JAVA_OPTIONS "-Djava.util.logging.SimpleFormatter.format=%1$s [%4$s] %5$s%6$s%n"
 //JAVA 17
 
@@ -97,7 +97,10 @@ class catalog_publish implements Callable<Integer> {
     private boolean list(Path path, Function<Path, Boolean> consumer) throws IOException {
         boolean error;
         try (Stream<Path> files = Files.list(path)) {
-            error = files.filter(file -> file.getFileName().toString().endsWith(".yaml"))
+            error = files.filter(file -> {
+                        String fileName = file.getFileName().toString();
+                        return fileName.endsWith(".yaml") || fileName.endsWith(".yml");
+                    })
                     .anyMatch(consumer::apply);
         }
         return error;
