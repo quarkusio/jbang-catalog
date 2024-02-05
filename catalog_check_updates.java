@@ -1,6 +1,6 @@
 ///usr/bin/env jbang "$0" "$@" ; exit $?
 //DEPS info.picocli:picocli:4.6.1
-//DEPS io.quarkus:quarkus-devtools-registry-client:2.13.0.Final
+//DEPS io.quarkus:quarkus-devtools-registry-client:3.7.1
 //DEPS org.eclipse.jgit:org.eclipse.jgit:5.13.0.202109080827-r
 //JAVA_OPTIONS "-Djava.util.logging.SimpleFormatter.format=%1$s [%4$s] %5$s%6$s%n"
 //JAVA 17
@@ -87,7 +87,10 @@ class catalog_check_updates implements Callable<Integer> {
     private void list(Path path, Consumer<Path> consumer) throws IOException {
         try (Stream<Path> files = Files.list(path)) {
             files
-                    .filter(file -> file.getFileName().toString().endsWith(".yaml"))
+                    .filter(file -> {
+                        String fileName = file.getFileName().toString();
+                        return fileName.endsWith(".yaml") || fileName.endsWith(".yml");
+                    })
                     .forEach(consumer);
         }
     }
