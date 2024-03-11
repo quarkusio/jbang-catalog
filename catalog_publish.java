@@ -38,6 +38,7 @@ import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.text.MessageFormat;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
@@ -115,7 +116,16 @@ class catalog_publish implements Callable<Integer> {
                 log.info("Platform is disabled. Skipping");
                 return false;
             }
-            String repository = tree.path("maven-repository").asText(MAVEN_CENTRAL);
+            List<String> repositories = null;
+            // allow the maven-repository field to be either a string or an array of strings
+            JsonNode repositoriesNode = tree.path("maven-repository");
+            if (repositoriesNode.isArray()) {
+                repositories = StreamSupport.stream(repositoriesNode.spliterator(), false)
+                        .map(JsonNode::asText)
+                        .collect(Collectors.toList());
+            } else {
+                repositories = Collections.singletonList(repositoriesNode.asText(MAVEN_CENTRAL));
+            }
             String groupId = tree.get("group-id").asText();
             String artifactId = tree.get("artifact-id").asText();
             String platformKey = tree.get("platform-key").asText();
@@ -132,12 +142,12 @@ class catalog_publish implements Callable<Integer> {
                     classifier = version;
                 }
                 // Get Extension YAML
-                byte[] jsonPlatform = readCatalog(repository, groupId, artifactId, version, classifier);
+                byte[] jsonPlatform = readCatalog(repositories, groupId, artifactId, version, classifier);
                 // Publish
                 log.infof("Publishing %s:%s:%s", groupId, artifactId, version);
                 publishCatalog(platformKey, jsonPlatform, false, "C", ArtifactCoords.jar(groupId, artifactId, version));
                 // Publish platform members
-                publishCatalogMembers(jsonPlatform, repository);
+                publishCatalogMembers(jsonPlatform, repositories);
                 if (!all) {
                     // Just publish the first one
                     break;
@@ -149,12 +159,12 @@ class catalog_publish implements Callable<Integer> {
                     classifier = version;
                 }
                 // Get Extension YAML
-                byte[] jsonPlatform = readCatalog(repository, groupId, artifactId, version, classifier);
+                byte[] jsonPlatform = readCatalog(repositories, groupId, artifactId, version, classifier);
                 // Publish
                 log.infof("Publishing %s:%s:%s", groupId, artifactId, version);
                 publishCatalog(platformKey, jsonPlatform, true, "C", ArtifactCoords.jar(groupId, artifactId, version));
                 // Publish platform members
-                publishCatalogMembers(jsonPlatform, repository);
+                publishCatalogMembers(jsonPlatform, repositories);
                 if (!all) {
                     // Just publish the first one
                     break;
@@ -187,7 +197,7 @@ class catalog_publish implements Callable<Integer> {
         return false;
     }
 
-    private void publishCatalogMembers(byte[] parentPlatform, String repository) throws IOException {
+    private void publishCatalogMembers(byte[] parentPlatform, List<String> repositories) throws IOException {
         ExtensionCatalog catalog = CatalogMapperHelper.deserialize(new ByteArrayInputStream(parentPlatform),
                 io.quarkus.registry.catalog.ExtensionCatalogImpl.Builder.class);
         Map<String, Object> platformRelease = (Map<String, Object>) catalog.getMetadata().get("platform-release");
@@ -200,7 +210,7 @@ class catalog_publish implements Callable<Integer> {
                 String artifactId = memberCoords.getArtifactId();
                 String version = memberCoords.getVersion();
                 String classifier = version;
-                byte[] jsonPlatform = readCatalog(repository, groupId, artifactId, version, classifier);
+                byte[] jsonPlatform = readCatalog(repositories, groupId, artifactId, version, classifier);
                 // Publish
                 log.infof("Publishing %s:%s:%s", memberCoords.getGroupId(), memberCoords.getArtifactId(), memberCoords.getVersion());
                 String platformKey = memberCoords.getGroupId() + ":" + memberCoords.getArtifactId();
@@ -261,35 +271,47 @@ class catalog_publish implements Callable<Integer> {
         return false;
     }
 
-    private byte[] readCatalog(String repository, String groupId, String artifactId, String version, String classifier)
+    private byte[] readCatalog(List<String> repositories, String groupId, String artifactId, String version, String classifier)
             throws IOException {
-        URI platformJson;
-        if (classifier == null) {
-            platformJson = URI.create(MessageFormat.format("{0}{1}/{2}/{3}/{2}-{3}.json",
-                    Objects.toString(repository, MAVEN_CENTRAL),
-                    groupId.replace('.', '/'),
-                    artifactId,
-                    version));
-        } else {
-            // https://repo1.maven.org/maven2/io/quarkus/quarkus-bom-quarkus-platform-descriptor/1.13.0.Final/quarkus-bom-quarkus-platform-descriptor-1.13.0.Final-1.13.0.Final.json
-            platformJson = URI.create(MessageFormat.format("{0}{1}/{2}/{3}/{2}-{4}-{3}.json",
-                    Objects.toString(repository, MAVEN_CENTRAL),
-                    groupId.replace('.', '/'),
-                    artifactId,
-                    version,
-                    classifier));
-        }
-        if ("file".equals(platformJson.getScheme())) {
-            var path = Path.of(platformJson);
-            if (!Files.exists(path)) {
-                throw new IOException(path + " does not exist");
+        List<URI> triedUris = new ArrayList<>();
+        for(String repository: repositories) {
+            URI platformJson;
+            if (classifier == null) {
+                platformJson = URI.create(MessageFormat.format("{0}{1}/{2}/{3}/{2}-{3}.json",
+                        Objects.toString(repository, MAVEN_CENTRAL),
+                        groupId.replace('.', '/'),
+                        artifactId,
+                        version));
+            } else {
+                // https://repo1.maven.org/maven2/io/quarkus/quarkus-bom-quarkus-platform-descriptor/1.13.0.Final/quarkus-bom-quarkus-platform-descriptor-1.13.0.Final-1.13.0.Final.json
+                platformJson = URI.create(MessageFormat.format("{0}{1}/{2}/{3}/{2}-{4}-{3}.json",
+                        Objects.toString(repository, MAVEN_CENTRAL),
+                        groupId.replace('.', '/'),
+                        artifactId,
+                        version,
+                        classifier));
             }
-            return Files.readAllBytes(path);
+            triedUris.add(platformJson);
+            if ("file".equals(platformJson.getScheme())) {
+                var path = Path.of(platformJson);
+                if (!Files.exists(path)) {
+                    throw new IOException(path + " does not exist");
+                }
+                return Files.readAllBytes(path);
+            }
+            try (CloseableHttpClient httpClient = createHttpClient()) {
+                CloseableHttpResponse response = httpClient.execute(new HttpGet(platformJson));
+                try (InputStream is = response.getEntity().getContent()) {
+                    if (response.getStatusLine().getStatusCode() != 200) {
+                        log.info("Can't get the extension catalog from " + platformJson + ", server responded: " + new String(is.readAllBytes()));
+                        continue; // try the next possible repo
+                    } else {
+                        return is.readAllBytes();
+                    }
+                }
+            }
         }
-        try (CloseableHttpClient httpClient = createHttpClient();
-             InputStream is = httpClient.execute(new HttpGet(platformJson)).getEntity().getContent()) {
-            return is.readAllBytes();
-        }
+        throw new RuntimeException("Can't read the extension catalog, URIs tried: " + triedUris);
     }
 
     private byte[] readExtension(String repository, String groupId, String artifactId, String version) throws IOException {
