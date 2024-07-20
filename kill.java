@@ -12,6 +12,7 @@ import picocli.CommandLine.Option;
 import static java.lang.System.out;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.concurrent.Callable;
 
@@ -34,9 +35,8 @@ class kill implements Callable<Integer> {
     @Override
     public Integer call() throws Exception { // your business logic goes here...
 
-        final List<String> kills = new ArrayList<>();
-
-        System.out.println("Scanning for processes listening on port " + port + " ...");
+        final HashSet<String> kills = new HashSet<String>();
+        System.out.println("Scanning for processes using port " + port + " ...");
 
         if (OS.WINDOWS.isCurrent()) {
             List<String> args = List.of("netstat", "-ano");
@@ -44,6 +44,9 @@ class kill implements Callable<Integer> {
                     .readOutput(true).execute().outputUTF8();
 
             output.lines().forEach(line -> {
+                if (!line.contains("LISTENING")) {
+                    return;
+                }
                 String[] parts = line.split("\\s+");
                 if (parts.length >= 5) {
                     String listen = parts[2];
@@ -79,6 +82,9 @@ class kill implements Callable<Integer> {
                     .readOutput(true).execute().outputUTF8();
 
             output.lines().skip(1).forEach(line -> {
+                if (!line.contains("(LISTEN)")) {
+                    return;
+                }
                 String[] parts = line.split("\\s+");
                 String pid = parts[1];
                 try {
@@ -97,6 +103,7 @@ class kill implements Callable<Integer> {
             out.println("No process killed or not found any process on port " + port);
             out.println("If looking for a different port use --port <port>");
         }
+        
         return 0;
     }
 }
