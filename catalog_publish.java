@@ -14,6 +14,7 @@ import io.quarkus.registry.catalog.CatalogMapperHelper;
 import io.quarkus.registry.catalog.ExtensionCatalog;
 import org.apache.http.NameValuePair;
 import org.apache.http.StatusLine;
+import org.apache.http.auth.UsernamePasswordCredentials;
 import org.apache.http.client.entity.UrlEncodedFormEntity;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
@@ -24,6 +25,11 @@ import org.apache.http.entity.ByteArrayEntity;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.message.BasicNameValuePair;
+import org.apache.maven.settings.Server;
+import org.apache.maven.settings.Settings;
+import org.apache.maven.settings.building.DefaultSettingsBuilderFactory;
+import org.apache.maven.settings.building.DefaultSettingsBuildingRequest;
+import org.apache.maven.settings.building.SettingsBuildingException;
 import org.jboss.logging.Logger;
 import picocli.CommandLine;
 import picocli.CommandLine.Command;
@@ -72,6 +78,8 @@ class catalog_publish implements Callable<Integer> {
 
     @Option(names = {"-a", "--all"}, description = "Publish all versions? If false, just the latest is published")
     boolean all;
+
+    private static Settings mavenSettings;
 
     private final ObjectMapper yamlMapper;
 
@@ -131,6 +139,8 @@ class catalog_publish implements Callable<Integer> {
             String platformKey = tree.get("platform-key").asText();
             String classifier = tree.path("classifier").asText();
             boolean classifierAsVersion = tree.path("classifier-as-version").asBoolean();
+            // Used to find the credentials in the Maven settings
+            String serverId = tree.path("server-id").asText();
             for (JsonNode node : tree.withArray("versions")) {
                 String version;
                 if (node.isObject()) {
@@ -142,12 +152,12 @@ class catalog_publish implements Callable<Integer> {
                     classifier = version;
                 }
                 // Get Extension YAML
-                byte[] jsonPlatform = readCatalog(repositories, groupId, artifactId, version, classifier);
+                byte[] jsonPlatform = readCatalog(repositories, groupId, artifactId, version, classifier, serverId);
                 // Publish
                 log.infof("Publishing %s:%s:%s", groupId, artifactId, version);
                 publishCatalog(platformKey, jsonPlatform, false, "C", ArtifactCoords.jar(groupId, artifactId, version));
                 // Publish platform members
-                publishCatalogMembers(jsonPlatform, repositories);
+                publishCatalogMembers(jsonPlatform, repositories, serverId);
                 if (!all) {
                     // Just publish the first one
                     break;
@@ -159,12 +169,12 @@ class catalog_publish implements Callable<Integer> {
                     classifier = version;
                 }
                 // Get Extension YAML
-                byte[] jsonPlatform = readCatalog(repositories, groupId, artifactId, version, classifier);
+                byte[] jsonPlatform = readCatalog(repositories, groupId, artifactId, version, classifier, serverId);
                 // Publish
                 log.infof("Publishing %s:%s:%s", groupId, artifactId, version);
                 publishCatalog(platformKey, jsonPlatform, true, "C", ArtifactCoords.jar(groupId, artifactId, version));
                 // Publish platform members
-                publishCatalogMembers(jsonPlatform, repositories);
+                publishCatalogMembers(jsonPlatform, repositories, serverId);
                 if (!all) {
                     // Just publish the first one
                     break;
@@ -197,7 +207,7 @@ class catalog_publish implements Callable<Integer> {
         return false;
     }
 
-    private void publishCatalogMembers(byte[] parentPlatform, List<String> repositories) throws IOException {
+    private void publishCatalogMembers(byte[] parentPlatform, List<String> repositories, String serverId) throws IOException {
         ExtensionCatalog catalog = CatalogMapperHelper.deserialize(new ByteArrayInputStream(parentPlatform),
                 io.quarkus.registry.catalog.ExtensionCatalogImpl.Builder.class);
         Map<String, Object> platformRelease = (Map<String, Object>) catalog.getMetadata().get("platform-release");
@@ -210,7 +220,7 @@ class catalog_publish implements Callable<Integer> {
                 String artifactId = memberCoords.getArtifactId();
                 String version = memberCoords.getVersion();
                 String classifier = version;
-                byte[] jsonPlatform = readCatalog(repositories, groupId, artifactId, version, classifier);
+                byte[] jsonPlatform = readCatalog(repositories, groupId, artifactId, version, classifier, serverId);
                 // Publish
                 log.infof("Publishing %s:%s:%s", memberCoords.getGroupId(), memberCoords.getArtifactId(), memberCoords.getVersion());
                 String platformKey = memberCoords.getGroupId() + ":" + memberCoords.getArtifactId();
@@ -271,7 +281,7 @@ class catalog_publish implements Callable<Integer> {
         return false;
     }
 
-    private byte[] readCatalog(List<String> repositories, String groupId, String artifactId, String version, String classifier)
+    private byte[] readCatalog(List<String> repositories, String groupId, String artifactId, String version, String classifier, String serverId)
             throws IOException {
         List<URI> triedUris = new ArrayList<>();
         for (String repository : repositories) {
@@ -300,7 +310,7 @@ class catalog_publish implements Callable<Integer> {
                 return Files.readAllBytes(path);
             }
             try (CloseableHttpClient httpClient = createHttpClient();
-                 CloseableHttpResponse response = httpClient.execute(new HttpGet(platformJson))) {
+                 CloseableHttpResponse response = request(httpClient, platformJson, serverId)) {
                 try (InputStream is = response.getEntity().getContent()) {
                     if (response.getStatusLine().getStatusCode() != 200) {
                         log.info("Can't get the extension catalog from " + platformJson + ", server responded: " + new String(is.readAllBytes()));
@@ -314,12 +324,28 @@ class catalog_publish implements Callable<Integer> {
         throw new RuntimeException("Can't read the extension catalog, URIs tried: " + triedUris);
     }
 
+    private CloseableHttpResponse request(CloseableHttpClient httpClient, URI platformJson, String serverId) throws IOException {
+        HttpGet request = new HttpGet(platformJson);
+
+        UsernamePasswordCredentials credentials = findAuthenticationInfo(serverId, platformJson);
+        if (credentials != null) {
+//            HttpClientContext httpClientContext = HttpClientContext.create();
+//            BasicCredentialsProvider credentialsProvider = new BasicCredentialsProvider();
+//            credentialsProvider.setCredentials(AuthScope.ANY, credentials);
+//            httpClientContext.setCredentialsProvider(credentialsProvider);
+//            httpClient.execute(request, httpClientContext);
+            request.addHeader("Authorization", "Basic " + java.util.Base64.getEncoder().encodeToString(
+                    (credentials.getUserName() + ":" + credentials.getPassword()).getBytes()));
+        }
+        return httpClient.execute(request);
+    }
+
     private byte[] readExtension(String repository, String groupId, String artifactId, String version) throws IOException {
-        URL extensionJarURL = new URL(MessageFormat.format("jar:{0}{1}/{2}/{3}/{2}-{3}.jar!/META-INF/quarkus-extension.yaml",
+        URL extensionJarURL = URI.create(MessageFormat.format("jar:{0}{1}/{2}/{3}/{2}-{3}.jar!/META-INF/quarkus-extension.yaml",
                 Objects.toString(repository, MAVEN_CENTRAL),
                 groupId.replace('.', '/'),
                 artifactId,
-                version));
+                version)).toURL();
         try (InputStream is = extensionJarURL.openStream()) {
             return is.readAllBytes();
         }
@@ -446,5 +472,43 @@ class catalog_publish implements Callable<Integer> {
         return HttpClients.custom()
                 .setSSLHostnameVerifier(NoopHostnameVerifier.INSTANCE)
                 .build();
+    }
+
+    private static Settings getMavenSettings() {
+        if (mavenSettings == null) {
+            DefaultSettingsBuildingRequest buildingRequest = new DefaultSettingsBuildingRequest();
+            DefaultSettingsBuilderFactory factory = new DefaultSettingsBuilderFactory();
+            try {
+                // Decrypt settings if needed
+                buildingRequest.setUserSettingsFile(Path.of(System.getProperty("user.home"), ".m2", "settings.xml").toFile());
+                buildingRequest.setSystemProperties(System.getProperties());
+                mavenSettings = factory.newInstance().build(buildingRequest).getEffectiveSettings();
+            } catch (SettingsBuildingException e) {
+                log.error("Error while reading Maven settings", e);
+                return null;
+            }
+        }
+        return mavenSettings;
+    }
+
+    private UsernamePasswordCredentials findAuthenticationInfo(String serverId, URI platformJson) {
+        // Try to find the credentials in the Maven settings
+        Settings settings = getMavenSettings();
+        if (settings == null) {
+            log.warnf("No Maven settings found. Skipping");
+            return null;
+        }
+        Server server = settings.getServer(serverId);
+        UsernamePasswordCredentials credentials = null;
+        if (server == null) {
+            log.warnf("No server found with id %s in settings.xml for %s", serverId, platformJson);
+        } else if (server.getUsername() == null || server.getPassword() == null) {
+            log.warnf("Server %s does not have username or password defined in settings.xml for %s", serverId, platformJson);
+        } else if (server.getUsername().isEmpty() || server.getPassword().isEmpty()) {
+            log.warnf("Server %s has empty username or password defined in settings.xml for %s", serverId, platformJson);
+        } else {
+            credentials = new UsernamePasswordCredentials(server.getUsername(), server.getPassword());
+        }
+        return credentials;
     }
 }
