@@ -501,7 +501,10 @@ class catalog_publish implements Callable<Integer> {
         Server server = settings.getServer(serverId);
         UsernamePasswordCredentials credentials = null;
         if (server == null) {
-            log.warnf("No server found with id %s in settings.xml for %s", serverId, platformJson);
+            if (serverId != null && !serverId.isEmpty()) {
+                // If the server id is not null or empty, warn the user
+                log.warnf("No server found with id %s in settings.xml for %s", serverId, platformJson);
+            }
         } else if (server.getUsername() == null || server.getPassword() == null) {
             log.warnf("Server %s does not have username or password defined in settings.xml for %s", serverId, platformJson);
         } else if (server.getUsername().isEmpty() || server.getPassword().isEmpty()) {
@@ -512,3 +515,4 @@ class catalog_publish implements Callable<Integer> {
         return credentials;
     }
 }
+
