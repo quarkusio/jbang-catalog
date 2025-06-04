@@ -1,6 +1,6 @@
-///usr/bin/env jbang "$0" "$@" ; exit $?
-//DEPS info.picocli:picocli:4.6.1
-//DEPS io.quarkus:quarkus-devtools-registry-client:3.7.1
+/// usr/bin/env jbang "$0" "$@" ; exit $?
+//DEPS info.picocli:picocli:4.7.7
+//DEPS io.quarkus:quarkus-devtools-registry-client:3.20.1
 //JAVA_OPTIONS "-Djava.util.logging.SimpleFormatter.format=%1$s [%4$s] %5$s%6$s%n"
 //JAVA 17
 
@@ -274,7 +274,7 @@ class catalog_publish implements Callable<Integer> {
     private byte[] readCatalog(List<String> repositories, String groupId, String artifactId, String version, String classifier)
             throws IOException {
         List<URI> triedUris = new ArrayList<>();
-        for(String repository: repositories) {
+        for (String repository : repositories) {
             URI platformJson;
             if (classifier == null) {
                 platformJson = URI.create(MessageFormat.format("{0}{1}/{2}/{3}/{2}-{3}.json",
@@ -299,8 +299,8 @@ class catalog_publish implements Callable<Integer> {
                 }
                 return Files.readAllBytes(path);
             }
-            try (CloseableHttpClient httpClient = createHttpClient()) {
-                CloseableHttpResponse response = httpClient.execute(new HttpGet(platformJson));
+            try (CloseableHttpClient httpClient = createHttpClient();
+                 CloseableHttpResponse response = httpClient.execute(new HttpGet(platformJson))) {
                 try (InputStream is = response.getEntity().getContent()) {
                     if (response.getStatusLine().getStatusCode() != 200) {
                         log.info("Can't get the extension catalog from " + platformJson + ", server responded: " + new String(is.readAllBytes()));
