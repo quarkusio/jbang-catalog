@@ -257,7 +257,8 @@ class catalog_check_updates implements Callable<Integer> {
             return true;
         }
         qualifier = qualifier.trim().toUpperCase(Locale.ROOT);
-        return !qualifier.startsWith("ALPHA") && !qualifier.startsWith("BETA") && !qualifier.startsWith("CR");
+        return !qualifier.startsWith("ALPHA") && !qualifier.startsWith("BETA") &&
+            !qualifier.startsWith("CR") && !qualifier.startsWith("RC");
     }
 
     private CloseableHttpClient createHttpClient() {
