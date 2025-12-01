@@ -192,7 +192,7 @@ class catalog_check_updates implements Callable<Integer> {
             versions = keepLatest(versions);
             versionsNode.removeAll();
             for (String version : versions) {
-                if (!containsValue(excludeVersions, version)) {
+                if (isFinal(version) && !containsValue(excludeVersions, version)) {
                     if (map.get(version) == null || map.get(version).isNull()) {
                         versionsNode.add(version);
                     } else {
