@@ -13,11 +13,13 @@ import java.nio.file.Path;
 import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
@@ -142,9 +144,7 @@ class catalog_check_updates implements Callable<Integer> {
             log.infof("Fetching latest version for %s:%s", groupId, artifactId);
             List<String> newVersions = populateVersions(repository, groupId, artifactId,
                     tree.withArray("versions"),
-                    tree.withArray("exclude-versions"))
-                     .stream().filter(catalog_check_updates::isFinal)
-                     .collect(Collectors.toList());
+                    tree.withArray("exclude-versions"));
             if (newVersions.isEmpty()) {
                 log.info("No new versions found");
             } else {
@@ -165,6 +165,7 @@ class catalog_check_updates implements Callable<Integer> {
             throws IOException {
         List<String> newVersions = new ArrayList<>();
         Map<String, JsonNode> map = new LinkedHashMap<>();
+        Set<String> preReleases = new HashSet<>();
         List<String> versionsAlreadyRead = StreamSupport.stream(versionsNode.spliterator(), false)
                 .map(node -> {
                     String versionName;
@@ -175,9 +176,14 @@ class catalog_check_updates implements Callable<Integer> {
                         versionName = node.asText();
                         map.put(versionName, versionsNode.nullNode());
                     }
+                    if (!isFinal(versionName)) {
+                        DefaultArtifactVersion dav = new DefaultArtifactVersion(versionName);
+                        preReleases.add(dav.getMajorVersion() + "." + dav.getMinorVersion() + ".");
+                    }
                     return versionName;
                 })
                 .collect(Collectors.toList());
+
         URI metadataURL = URI.create(MessageFormat.format("{0}{1}/{2}/maven-metadata.xml",
                 Objects.toString(repository, MAVEN_CENTRAL),
                 groupId.replace('.', '/'),
@@ -194,12 +200,18 @@ class catalog_check_updates implements Callable<Integer> {
             for (String version : versions) {
                 if (!containsValue(excludeVersions, version)) {
                     if (map.get(version) == null || map.get(version).isNull()) {
-                        versionsNode.add(version);
+                        // new version detected
+                        // for pre-releases allow update only if there was
+                        // already a manual entry in the catalog descriptor
+                        if (isFinal(version) || preReleases.stream().anyMatch(pre -> version.startsWith(pre))) {
+                            versionsNode.add(version);
+                            newVersions.add(version);
+                        }
                     } else {
                         versionsNode.addObject()
                                 .set(version, map.get(version));
+                        newVersions.add(version);
                     }
-                    newVersions.add(version);
                 }
             }
         } catch (XmlPullParserException e) {
