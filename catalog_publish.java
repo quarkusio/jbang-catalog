@@ -2,7 +2,7 @@
 //DEPS info.picocli:picocli:4.7.7
 //DEPS io.quarkus:quarkus-devtools-registry-client:3.20.1
 //JAVA_OPTIONS "-Djava.util.logging.SimpleFormatter.format=%1$s [%4$s] %5$s%6$s%n"
-//JAVA 17
+//JAVA 21
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
