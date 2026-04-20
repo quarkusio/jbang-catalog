@@ -31,6 +31,11 @@
     "kill": {
       "script-ref": "kill.java"
     },
+    "quarkus-agent-mcp": {
+      "script-ref": "io.quarkus:quarkus-agent-mcp:RELEASE:runner",
+      "description": "MCP server for AI coding agents to create, manage, and interact with Quarkus applications",
+      "java-version": "21+"
+    },
     "quarkus-fmt": {
       "script-ref": "fmt.java"
     },
