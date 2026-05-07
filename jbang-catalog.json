@@ -41,6 +41,13 @@
     },
     "fmt": {
       "script-ref": "fmt.java"
+    },
+    "quarkus-env": {
+      "script-ref": "quarkus-env.java",
+      "description": "Convert Quarkus application.properties to .env format"
+    },
+    "env": {
+      "script-ref": "quarkus-env.java"
     }
   },
   "templates": {
