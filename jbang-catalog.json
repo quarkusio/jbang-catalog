@@ -41,6 +41,11 @@
     },
     "fmt": {
       "script-ref": "fmt.java"
+    },
+    "claude-proxy": {
+      "script-ref": "claudeproxy.java",
+      "description": "OpenAI-compatible API proxy for Claude CLI, works with LangChain4j, Chappie, and any OpenAI client",
+      "java-version": "21+"
     }
   },
   "templates": {
