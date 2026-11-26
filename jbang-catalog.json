@@ -15,15 +15,15 @@
     },
     "cli": {
       "script-ref": "https://repo1.maven.org/maven2/io/quarkus/quarkus-cli/4.0.1/quarkus-cli-4.0.1-runner.jar",
-      "java-version": "17+"      
+      "java": "21+"      
     },
     "qs": {
       "script-ref": "https://repo1.maven.org/maven2/io/quarkus/quarkus-cli/4.0.1/quarkus-cli-4.0.1-runner.jar",
-      "java-version": "17+"
+      "java": "21+"
     },
     "quarkus": {
       "script-ref": "https://repo1.maven.org/maven2/io/quarkus/quarkus-cli/4.0.1/quarkus-cli-4.0.1-runner.jar",
-      "java-version": "17+"
+      "java": "21+"
     },
     "quarkus-kill": {
       "script-ref": "kill.java"
@@ -34,7 +34,7 @@
     "quarkus-agent-mcp": {
       "script-ref": "io.quarkus:quarkus-agent-mcp:RELEASE:runner",
       "description": "MCP server for AI coding agents to create, manage, and interact with Quarkus applications",
-      "java-version": "21+"
+      "java": "21+"
     },
     "quarkus-fmt": {
       "script-ref": "fmt.java"
